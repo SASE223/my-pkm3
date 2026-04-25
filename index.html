@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>个人知识 & 生活管理系统</title>
+    <style>
+        :root {
+            --bg: #f5f0eb;
+            --surface: #fffdf8;
+            --surface2: #fefaf3;
+            --text: #2c2416;
+            --text2: #5c5347;
+            --text3: #8a7e6f;
+            --accent: #c97d3f;
+            --accent2: #e8a860;
+            --accent-light: #fdf0e0;
+            --border: #e5ddd2;
+            --border-light: #f0e9dd;
+            --shadow: 0 2px 12px rgba(60, 40, 20, 0.06);
+            --shadow-lg: 0 8px 32px rgba(60, 40, 20, 0.10);
+            --radius: 12px;
+            --radius-sm: 8px;
+            --radius-xs: 6px;
+            --font: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', 'Noto Sans SC', system-ui, sans-serif;
+            --font-mono: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', 'SF Mono', 'Consolas', monospace;
+            --transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            --sidebar-w: 340px;
+            --header-h: 52px;
+            --gantt-row-h: 36px;
+            --todo-card-bg: #fffdf7;
+            --habit-done: #7eb774;
+            --habit-undone: #e0d5c5;
+            --priority-high: #e05555;
+            --priority-mid: #e8a040;
+            --priority-low: #8aa878;
+            --code-bg: #f9f6f0;
+            --tag-bg: #fdf0e0;
+            --tag-text: #b87333;
+        }
+        [data-theme="dark"] {
+            --bg: #1e1b18;
+            --surface: #282521;
+            --surface2: #2d2a25;
+            --text: #e8e0d5;
+            --text2: #bfb5a5;
+            --text3: #8a7e6f;
+            --accent: #d4914f;
+            --accent2: #c97d3f;
+            --accent-light: #3a2a18;
+            --border: #3d3830;
+            --border-light: #332e27;
+            --shadow: 0 2px 12px rgba(0, 0, 0, 0.25);
+            --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.35);
+            --todo-card-bg: #2d2a24;
+            --code-bg: #2a2722;
+            --tag-bg: #3a2a18;
+            --tag-text: #d4914f;
+            --habit-done: #6a9e60;
+            --habit-undone: #4a4038;
+        }
+        * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; -webkit-user-select:none; user-select:none; }
+        input, textarea, select { -webkit-user-select:text; user-select:text; }
+        body { font-family:var(--font); background:var(--bg); color:var(--text); height:100vh; overflow:hidden; display:flex; touch-action:manipulation; -webkit-font-smoothing:antialiased; }
+        .sidebar { width:var(--sidebar-w); height:100vh; background:var(--surface); border-right:1px solid var(--border); display:flex; flex-direction:column; transition:transform var(--transition), width var(--transition); z-index:100; flex-shrink:0; box-shadow:var(--shadow); position:relative; }
+        .sidebar.collapsed { transform:translateX(calc(-1 * var(--sidebar-w))); width:0; overflow:hidden; }
+        .sidebar-tabs { display:flex; border-bottom:1px solid var(--border); flex-shrink:0; background:var(--surface2); }
+        .sidebar-tab { flex:1; padding:12px 6px; text-align:center; cursor:pointer; font-size:13px; font-weight:500; color:var(--text3); border-bottom:2px solid transparent; transition:var(--transition); white-space:nowrap; }
+        .sidebar-tab:hover { color:var(--text2); background:rgba(0,0,0,0.02); }
+        .sidebar-tab.active { color:var(--accent); border-bottom-color:var(--accent); font-weight:600; }
+        .sidebar-panel { flex:1; overflow-y:auto; display:none; flex-direction:column; padding:8px; -webkit-overflow-scrolling:touch; }
+        .sidebar-panel.active { display:flex; }
+        .sidebar-panel::-webkit-scrollbar { width:4px; }
+        .sidebar-panel::-webkit-scrollbar-thumb { background:var(--border); border-radius:4px; }
+        .cal-widget { padding:4px; }
+        .cal-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; padding:0 4px; }
+        .cal-header button { background:none; border:none; cursor:pointer; font-size:18px; color:var(--text2); padding:8px 12px; border-radius:var(--radius-xs); }
+        .cal-header button:hover { background:var(--border-light); color:var(--accent); }
+        .cal-month-label { font-weight:600; font-size:14px; color:var(--text); }
+        .cal-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:2px; text-align:center; font-size:11px; }
+        .cal-day-name { color:var(--text3); padding:6px 0; font-weight:500; font-size:10px; }
+        .cal-day { padding:8px 2px; cursor:pointer; border-radius:var(--radius-xs); color:var(--text2); min-width:32px; min-height:32px; display:flex; align-items:center; justify-content:center; }
+        .cal-day:hover { background:var(--accent-light); color:var(--accent); }
+        .cal-day.today { background:var(--accent); color:#fff; font-weight:600; border-radius:50%; width:32px; height:32px; line-height:32px; padding:0; margin:0 auto; }
+        .cal-day.has-notes::after { content:''; position:absolute; bottom:4px; left:50%; transform:translateX(-50%); width:4px; height:4px; border-radius:50%; background:var(--accent2); }
+        .cal-day.today.has-notes::after { background:#fff; bottom:3px; }
+        .cal-day.other-month { opacity:0.4; }
+        .notes-list-header { display:flex; gap:6px; padding:4px 0 8px; }
+        .notes-list-header input { flex:1; padding:10px 12px; border:1px solid var(--border); border-radius:var(--radius-xs); font-size:14px; background:var(--surface2); color:var(--text); outline:none; }
+        .notes-list-header input:focus { border-color:var(--accent); }
+        .notes-list-header button { padding:10px 16px; background:var(--accent); color:#fff; border:none; border-radius:var(--radius-xs); cursor:pointer; font-size:16px; }
+        .notes-list { flex:1; overflow-y:auto; display:flex; flex-direction:column; gap:4px; }
+        .note-item { padding:12px; border-radius:var(--radius-xs); cursor:pointer; border-left:3px solid transparent; font-size:14px; display:flex; justify-content:space-between; align-items:center; background:var(--surface2); }
+        .note-item:hover { background:var(--accent-light); border-left-color:var(--accent2); }
+        .note-item .note-title { flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+        .note-item .note-badges { display:flex; gap:4px; }
+        .badge { font-size:10px; padding:2px 7px; border-radius:10px; }
+        .badge-code { background:#e8dfd2; color:#6b5d4f; } .badge-review { background:#dce8d5; color:#5a7a4a; } .badge-note { background:#dde4ef; color:#4a5f7a; }
+        [data-theme="dark"] .badge-code { background:#3d352b; color:#c4b59a; } [data-theme="dark"] .badge-review { background:#2d3a26; color:#8ab878; } [data-theme="dark"] .badge-note { background:#252d38; color:#8aacd4; }
+        .note-item .note-del { visibility:hidden; cursor:pointer; color:#c55; font-size:18px; padding:4px 8px; }
+        .note-item:hover .note-del { visibility:visible; }
+        .btn-sm { padding:10px 14px; font-size:14px; border:none; border-radius:var(--radius-xs); cursor:pointer; font-weight:500; white-space:nowrap; }
+        .btn-accent { background:var(--accent); color:#fff; } .btn-outline { background:transparent; border:1px solid var(--border); color:var(--text2); }
+        .gantt-editor-section { padding:4px 0; } .gantt-editor-section h4 { font-size:14px; margin-bottom:8px; }
+        .gantt-editor-section select { width:100%; padding:10px; border:1px solid var(--border); border-radius:var(--radius-xs); font-size:14px; background:var(--surface2); outline:none; }
+        .gantt-task-row { display:flex; gap:6px; margin-bottom:8px; flex-wrap:wrap; }
+        .gantt-task-row input { padding:10px 8px; border:1px solid var(--border); border-radius:var(--radius-xs); font-size:14px; background:var(--surface2); color:var(--text); flex:1; }
+        .gantt-task-row input[type="date"] { min-width:110px; }
+        .gantt-project-list { max-height:220px; overflow-y:auto; margin-top:6px; }
+        .gantt-project-item { padding:10px; margin:4px 0; border-radius:var(--radius-xs); cursor:pointer; background:var(--surface2); border-left:3px solid var(--accent); }
+        .main-area { flex:1; display:flex; flex-direction:column; height:100vh; overflow:hidden; }
+        .sidebar-mask { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.4); z-index:99; backdrop-filter:blur(2px); -webkit-backdrop-filter:blur(2px); }
+        .sidebar-mask.show { display:block; }
+        .top-bar { height:var(--header-h); display:flex; align-items:center; padding:0 12px; gap:10px; border-bottom:1px solid var(--border); background:var(--surface); flex-shrink:0; }
+        .top-bar .hamburger { cursor:pointer; font-size:22px; padding:8px; background:none; border:none; color:var(--text2); }
+        .top-bar .page-title { font-weight:600; font-size:16px; }
+        .spacer { flex:1; }
+        .reminder-btn { position:relative; font-size:22px; padding:8px; cursor:pointer; background:none; border:none; color:var(--text2); }
+        .reminder-btn.active-reminder { color:var(--accent); animation:pulse-reminder 2s infinite; }
+        @keyframes pulse-reminder { 0%,100%{transform:scale(1);} 50%{transform:scale(1.15);} }
+        .reminder-dropdown { display:none; position:absolute; top:44px; right:8px; background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); box-shadow:var(--shadow-lg); padding:14px; z-index:200; min-width:260px; }
+        .reminder-dropdown.show { display:block; }
+        .theme-toggle { font-size:20px; padding:8px; cursor:pointer; background:none; border:none; color:var(--text2); }
+        .content-area { flex:1; overflow-y:auto; padding:12px; gap:12px; display:flex; flex-direction:column; -webkit-overflow-scrolling:touch; }
+        .top-panels { display:flex; gap:12px; min-height:250px; flex-shrink:0; }
+        .panel { flex:1; background:var(--surface); border-radius:var(--radius); box-shadow:var(--shadow); border:1px solid var(--border-light); display:flex; flex-direction:column; overflow:hidden; }
+        .panel-header { padding:14px 16px; border-bottom:1px solid var(--border-light); font-weight:600; font-size:14px; display:flex; justify-content:space-between; background:var(--surface2); }
+        .panel-body { flex:1; overflow-y:auto; padding:8px 12px; display:flex; flex-direction:column; gap:4px; }
+        .todo-item { display:flex; align-items:center; gap:10px; padding:10px; border-radius:var(--radius-xs); cursor:pointer; background:var(--todo-card-bg); border:1px solid transparent; font-size:14px; }
+        .todo-item:hover { border-color:var(--border); }
+        .todo-checkbox { width:22px; height:22px; border-radius:50%; border:2px solid var(--border); flex-shrink:0; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:12px; color:transparent; }
+        .todo-checkbox.done { background:var(--habit-done); border-color:var(--habit-done); color:#fff; }
+        .todo-text { flex:1; }
+        .todo-text.done { text-decoration:line-through; opacity:0.7; }
+        .todo-priority { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
+        .priority-high { background:var(--priority-high); } .priority-mid { background:var(--priority-mid); } .priority-low { background:var(--priority-low); }
+        .todo-del { visibility:hidden; cursor:pointer; color:#c55; font-size:16px; padding:4px 8px; }
+        .todo-item:hover .todo-del { visibility:visible; }
+        .add-todo-row { display:flex; gap:6px; padding:6px 12px 8px; align-items:center; }
+        .add-todo-row input { flex:1; padding:10px; border:1px dashed var(--border); border-radius:var(--radius-xs); font-size:14px; background:transparent; outline:none; }
+        .add-todo-row input:focus { border-style:solid; border-color:var(--accent); background:var(--surface2); }
+        .add-todo-row button { padding:10px 16px; background:var(--accent); color:#fff; border:none; border-radius:var(--radius-xs); cursor:pointer; }
+        .add-todo-row select { padding:10px; border:1px solid var(--border); border-radius:var(--radius-xs); font-size:14px; background:var(--surface2); }
+        .review-entry { display:flex; align-items:center; gap:8px; padding:12px 14px; margin:8px 12px; background:linear-gradient(135deg, #fdf5ea, #fef9f2); border-radius:var(--radius-sm); cursor:pointer; border:1px dashed var(--accent2); font-size:14px; font-weight:500; color:var(--accent); }
+        .gantt-panel { flex:1; min-height:300px; background:var(--surface); border-radius:var(--radius); box-shadow:var(--shadow); border:1px solid var(--border-light); display:flex; flex-direction:column; overflow:hidden; }
+        .gantt-viewport { flex:1; overflow:auto; -webkit-overflow-scrolling:touch; }
+        .gantt-chart { display:flex; flex-direction:column; min-width:fit-content; }
+        .gantt-row { display:flex; align-items:center; height:var(--gantt-row-h); border-bottom:1px solid var(--border-light); }
+        .gantt-label { width:140px; flex-shrink:0; padding:0 10px; font-size:12px; font-weight:500; background:var(--surface2); position:sticky; left:0; z-index:2; }
+        .gantt-timeline { position:relative; flex:1; min-width:600px; }
+        .gantt-bar { position:absolute; top:5px; height:calc(var(--gantt-row-h) - 10px); border-radius:4px; cursor:pointer; display:flex; align-items:center; padding:0 8px; font-size:10px; color:#fff; min-width:20px; }
+        .gantt-header-row { display:flex; height:30px; border-bottom:2px solid var(--border); }
+        .gantt-header-label { width:140px; flex-shrink:0; background:var(--surface2); position:sticky; left:0; z-index:2; }
+        .gantt-header-days { display:flex; flex:1; min-width:600px; }
+        .gantt-day-header { flex:1; text-align:center; font-size:10px; padding:4px 0; color:var(--text3); border-right:1px solid var(--border-light); }
+        .gantt-day-header.weekend { background:rgba(200,160,120,0.06); }
+        .gantt-day-header.today-col { background:rgba(200,125,60,0.1); font-weight:700; color:var(--accent); }
+        .modal-overlay { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.4); z-index:300; display:flex; align-items:center; justify-content:center; backdrop-filter:blur(2px); -webkit-backdrop-filter:blur(2px); padding:12px; }
+        .modal { background:var(--surface); border-radius:var(--radius); box-shadow:var(--shadow-lg); padding:20px; min-width:320px; max-width:95vw; max-height:85vh; overflow-y:auto; border:1px solid var(--border); width:100%; }
+        .modal h3 { margin-bottom:14px; }
+        .modal input, .modal textarea, .modal select { width:100%; padding:12px; border:1px solid var(--border); border-radius:var(--radius-xs); font-size:14px; background:var(--surface2); color:var(--text); margin-bottom:10px; outline:none; }
+        .modal textarea { min-height:160px; }
+        .modal textarea.code-area { font-family:var(--font-mono); background:var(--code-bg); }
+        .btn-row { display:flex; gap:8px; justify-content:flex-end; margin-top:8px; flex-wrap:wrap; }
+        .tag-list { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:8px; }
+        .tag-chip { padding:6px 12px; border-radius:12px; font-size:13px; cursor:pointer; background:var(--tag-bg); color:var(--tag-text); border:1px solid transparent; }
+        .tag-chip.selected { border-color:var(--accent); background:var(--accent-light); font-weight:600; }
+        .habit-check-row { display:flex; align-items:center; gap:10px; padding:10px 0; border-bottom:1px solid var(--border-light); font-size:14px; }
+        .toast { position:fixed; bottom:24px; right:24px; background:#333; color:#fff; padding:12px 20px; border-radius:24px; font-size:14px; z-index:999; animation:fadeInUp 0.3s; }
+        @keyframes fadeInUp { from{opacity:0;transform:translateY(20px);} to{opacity:1;transform:translateY(0);} }
+        @media (max-width: 900px) {
+            .sidebar { position:fixed; left:0; top:0; z-index:200; width:300px; transform:translateX(-100%); height:100vh; }
+            .sidebar.open-mobile { transform:translateX(0); }
+            .top-panels { flex-direction:column; }
+            .modal { min-width:90vw; }
+            .gantt-label { width:100px; font-size:11px; }
+            .gantt-header-label { width:100px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar-mask" id="sidebar-mask"></div>
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-tabs">
+            <div class="sidebar-tab active" data-panel="panel-notes">📝 笔记</div>
+            <div class="sidebar-tab" data-panel="panel-calendar">📅 日历</div>
+            <div class="sidebar-tab" data-panel="panel-gantt-edit">📊 甘特图</div>
+        </div>
+        <div class="sidebar-panel active" id="panel-notes">
+            <div class="notes-list-header">
+                <input type="text" id="note-search" placeholder="搜索笔记...">
+                <button onclick="openNoteEditor()">＋</button>
+            </div>
+            <div class="notes-list" id="notes-list"></div>
+        </div>
+        <div class="sidebar-panel" id="panel-calendar">
+            <div class="cal-widget" id="cal-widget"></div>
+            <div style="font-size:11px;color:var(--text3);padding:8px;text-align:center;">点击日期查看当日笔记</div>
+        </div>
+        <div class="sidebar-panel" id="panel-gantt-edit">
+            <div class="gantt-editor-section">
+                <h4>📊 甘特图项目</h4>
+                <select id="gantt-project-select" onchange="selectGanttProject()"><option value="">-- 选择或新建 --</option></select>
+                <div class="gantt-task-row">
+                    <input type="text" id="new-project-name" placeholder="新项目名称">
+                    <button class="btn-sm btn-accent" onclick="createGanttProject()">创建项目</button>
+                </div>
+                <div class="gantt-project-list" id="gantt-project-list"></div>
+                <hr style="border:none;border-top:1px solid var(--border-light);margin:10px 0;">
+                <h4>➕ 添加任务</h4>
+                <div class="gantt-task-row"><input type="text" id="new-task-name" placeholder="任务名称"></div>
+                <div class="gantt-task-row"><input type="date" id="new-task-start"><input type="date" id="new-task-end"></div>
+                <div class="gantt-task-row">
+                    <input type="number" id="new-task-progress" placeholder="进度%" min="0" max="100" value="0" style="max-width:70px;">
+                    <select id="new-task-color" style="flex:1;">
+                        <option value="#c97d3f">琥珀色</option><option value="#5b9bd5">蓝色</option><option value="#6aab6a">绿色</option><option value="#d57878">红色</option><option value="#9b7ec4">紫色</option><option value="#5bada0">青色</option>
+                    </select>
+                    <button class="btn-sm btn-accent" onclick="addTaskToProject()">添加</button>
+                </div>
+                <div id="gantt-tasks-mini-list" style="max-height:180px;overflow-y:auto;margin-top:6px;"></div>
+            </div>
+        </div>
+    </aside>
+    <div class="main-area">
+        <div class="top-bar">
+            <button class="hamburger" id="hamburger-btn">☰</button>
+            <span class="page-title">📋 个人仪表盘</span>
+            <span class="spacer"></span>
+            <button class="theme-toggle" id="theme-toggle">🌓</button>
+            <button class="reminder-btn" id="reminder-btn">🔔<span id="reminder-dot" style="display:none;position:absolute;top:4px;right:6px;width:8px;height:8px;border-radius:50%;background:#e05555;"></span></button>
+            <div class="reminder-dropdown" id="reminder-dropdown">
+                <strong>⏰ 提醒设置</strong>
+                <label><input type="radio" name="reminder-type" value="none" checked> 关闭</label>
+                <label><input type="radio" name="reminder-type" value="random-note"> 📝 随机笔记提醒</label>
+                <label style="margin-left:20px;font-size:11px;">间隔(分): <input type="number" id="random-interval" value="30" min="5" style="width:70px;"></label>
+                <label><input type="radio" name="reminder-type" value="habit"> ✅ 习惯提醒</label>
+                <label style="margin-left:20px;font-size:11px;">时间: <input type="time" id="habit-reminder-time" value="09:00" style="width:100px;"></label>
+                <button class="btn-sm btn-accent" onclick="saveReminderSettings()" style="width:100%;margin-top:8px;">保存</button>
+            </div>
+        </div>
+        <div class="content-area">
+            <div class="top-panels">
+                <div class="panel">
+                    <div class="panel-header">☀️ 每日Todo <span class="date-label" id="today-label"></span></div>
+                    <div class="panel-body" id="daily-todo-list"></div>
+                    <div class="add-todo-row">
+                        <input type="text" id="daily-todo-input" placeholder="添加今日任务...">
+                        <select id="daily-todo-priority" style="max-width:70px;"><option value="low">低</option><option value="mid" selected>中</option><option value="high">高</option></select>
+                        <button onclick="addDailyTodo()">＋</button>
+                    </div>
+                    <div class="review-entry" onclick="openReviewModal()">📋 今日复盘 & 习惯打卡 →</div>
+                </div>
+                <div class="panel">
+                    <div class="panel-header">📌 待办事项</div>
+                    <div class="panel-body" id="todo-list"></div>
+                    <div class="add-todo-row">
+                        <input type="text" id="todo-input" placeholder="添加待办...">
+                        <select id="todo-priority" style="max-width:70px;"><option value="low">低</option><option value="mid" selected>中</option><option value="high">高</option></select>
+                        <button onclick="addTodo()">＋</button>
+                    </div>
+                </div>
+            </div>
+            <div class="gantt-panel">
+                <div class="panel-header">
+                    📊 甘特图视图
+                    <select id="gantt-view-select" onchange="loadGanttView()"><option value="">-- 选择项目 --</option></select>
+                    <span id="gantt-date-range" style="font-size:11px;color:var(--text3);margin-left:8px;"></span>
+                </div>
+                <div class="gantt-viewport" id="gantt-viewport">
+                    <div class="gantt-chart" id="gantt-chart"><div style="padding:40px;text-align:center;color:var(--text3);">请在侧栏创建项目</div></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 笔记编辑弹窗 -->
+    <div class="modal-overlay" id="note-modal" style="display:none;">
+        <div class="modal">
+            <h3 id="note-modal-title">新建笔记</h3>
+            <input type="text" id="note-title-input" placeholder="笔记标题">
+            <div class="tag-list" id="note-type-tags">
+                <span class="tag-chip selected" data-type="note">📄 笔记</span>
+                <span class="tag-chip" data-type="code">💻 代码</span>
+                <span class="tag-chip" data-type="review">📋 复盘</span>
+            </div>
+            <textarea id="note-content-input" placeholder="内容..."></textarea>
+            <input type="text" id="note-tags-input" placeholder="标签(逗号分隔)">
+            <div class="btn-row">
+                <button class="btn-sm btn-outline" onclick="closeNoteEditor()">取消</button>
+                <button class="btn-sm btn-accent" onclick="saveNote()">保存</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 复盘弹窗 -->
+    <div class="modal-overlay" id="review-modal" style="display:none;">
+        <div class="modal">
+            <h3>📋 今日复盘 <span id="review-date-label"></span></h3>
+            <div><strong>习惯打卡：</strong><div id="habit-check-list"></div><button class="btn-sm btn-outline" onclick="addHabitPrompt()" style="margin-top:6px;">＋ 添加习惯</button></div>
+            <textarea id="review-content" placeholder="复盘总结..."></textarea>
+            <div class="btn-row">
+                <button class="btn-sm btn-outline" onclick="closeReviewModal()">取消</button>
+                <button class="btn-sm btn-accent" onclick="saveReview()">保存</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 首次设置弹窗 (Token 输入) -->
+    <div class="modal-overlay" id="setup-modal" style="display:flex;">
+        <div class="modal">
+            <h3>🔐 同步设置（仅首次）</h3>
+            <p style="font-size:14px; color:var(--text2); margin-bottom:12px;">
+                请输入您的 GitHub Gist ID 和 Token。<br>
+                它们只会保存在您当前浏览器的本地存储中，不会上传到任何服务器。
+            </p>
+            <input type="text" id="setup-gist-id" placeholder="Gist ID（一长串哈希值）">
+            <input type="password" id="setup-gist-token" placeholder="GitHub Token (ghp_开头)">
+            <div class="btn-row">
+                <button class="btn-sm btn-accent" onclick="saveSetup()">保存并开始同步</button>
+            </div>
+            <p style="font-size:11px;color:var(--text3);margin-top:8px;">
+                如何获取？参考 GitHub 帮助。如果暂时不想设置，可以关闭弹窗，但同步功能将不可用。
+            </p>
+        </div>
+    </div>
+
+    <script>
+        // ==================== 动态配置（从浏览器本地存储读取） ====================
+        let GIST_ID = localStorage.getItem('pkm_gist_id') || '';
+        let GIST_TOKEN = localStorage.getItem('pkm_gist_token') || '';
+        const SYNC_ENABLED = true; // 总开关
+
+        const STORAGE_KEY = 'pkm_app_data_v2';
+        const SETTINGS_KEY = 'pkm_app_settings_v2';
+
+        function getDefaultData() {
+            return { notes: [], todos: [], dailyTodos: {}, reviews: {}, habits: [], ganttProjects: [], activeGanttProjectId: null };
+        }
+
+        function loadLocalData() {
+            try { const raw = localStorage.getItem(STORAGE_KEY); if (raw) return Object.assign(getDefaultData(), JSON.parse(raw)); } catch(e) {}
+            return getDefaultData();
+        }
+
+        function saveLocalData(data) { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }
+
+        async function fetchFromGist() {
+            if (!SYNC_ENABLED || !GIST_ID || !GIST_TOKEN) return null;
+            try {
+                const res = await fetch(`https://api.github.com/gists/${GIST_ID}`, { headers: { Authorization: `token ${GIST_TOKEN}` } });
+                if (!res.ok) throw new Error('fail');
+                const gist = await res.json();
+                const file = gist.files['pkm_data.json'];
+                if (file && file.content) return Object.assign(getDefaultData(), JSON.parse(file.content));
+            } catch(e) { console.warn('Gist 拉取失败，使用本地缓存'); }
+            return null;
+        }
+
+        async function pushToGist(data) {
+            if (!SYNC_ENABLED || !GIST_ID || !GIST_TOKEN) return;
+            try {
+                await fetch(`https://api.github.com/gists/${GIST_ID}`, {
+                    method: 'PATCH',
+                    headers: { Authorization: `token ${GIST_TOKEN}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ files: { 'pkm_data.json': { content: JSON.stringify(data, null, 2) } } })
+                });
+                console.log('☁️ 同步成功');
+            } catch(e) { console.warn('同步失败'); }
+        }
+
+        let appData = loadLocalData();
+        let appSettings = loadSettings();
+
+        function saveData(data) {
+            appData = data;
+            saveLocalData(data);
+            pushToGist(data);
+        }
+
+        function loadSettings() {
+            try { const raw = localStorage.getItem(SETTINGS_KEY); if (raw) return JSON.parse(raw); } catch(e) {}
+            return { reminderType: 'none', randomInterval: 30, habitReminderTime: '09:00', theme: 'light' };
+        }
+
+        function saveSettings(settings) { localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); }
+
+        // ==================== 设置弹窗逻辑 ====================
+        function checkSetup() {
+            if (!GIST_ID || !GIST_TOKEN) {
+                document.getElementById('setup-modal').style.display = 'flex';
+                return false;
+            }
+            document.getElementById('setup-modal').style.display = 'none';
+            return true;
+        }
+
+        function saveSetup() {
+            const id = document.getElementById('setup-gist-id').value.trim();
+            const token = document.getElementById('setup-gist-token').value.trim();
+            if (!id || !token) { alert('请完整填写 Gist ID 和 Token'); return; }
+            localStorage.setItem('pkm_gist_id', id);
+            localStorage.setItem('pkm_gist_token', token);
+            GIST_ID = id;
+            GIST_TOKEN = token;
+            document.getElementById('setup-modal').style.display = 'none';
+            // 设置完成，重新启动完整初始化
+            initApp();
+        }
+
+        // 点击遮罩关闭设置弹窗（允许跳过，但无法同步）
+        document.getElementById('setup-modal').addEventListener('click', function(e) {
+            if (e.target === this) this.style.display = 'none';
+        });
+
+        // ==================== 工具函数 ====================
+        const genId = () => 'id_' + Date.now() + '_' + Math.random().toString(36).substr(2, 7);
+        const getToday = () => new Date().toISOString().split('T')[0];
+        function formatDate(d) { if(!d) return ''; const dt = new Date(d+'T00:00:00'); return dt.toLocaleDateString('zh-CN',{month:'short',day:'numeric',weekday:'short'}); }
+        function showToast(msg) { const t = document.createElement('div'); t.className='toast'; t.textContent=msg; document.body.appendChild(t); setTimeout(()=>t.remove(), 2200); }
+        function escapeHtml(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+
+        // 界面渲染（抽离出来）
+        function renderUI() {
+            document.getElementById('today-label').textContent = formatDate(getToday());
+            renderDailyTodos(); renderTodos(); renderNotesList(); renderCalendarWidget(); refreshGanttEditor(); renderGantt();
+            setupReminder(); loadReminderSettingsToUI();
+        }
+
+        // 初始化
+        async function initApp() {
+            // 先检查是否已设置 Token
+            if (!checkSetup()) {
+                // 未设置则仅渲染本地界面，不同步
+                renderUI();
+                return;
+            }
+            // 已设置：尝试从云端拉取数据
+            if (SYNC_ENABLED) {
+                const cloud = await fetchFromGist();
+                if (cloud) { appData = cloud; saveLocalData(appData); console.log('☁️ 已加载云端数据'); }
+            }
+            renderUI();
+        }
+
+        // ==================== 侧边栏 & 移动端 ====================
+        const sidebar = document.getElementById('sidebar');
+        const mask = document.getElementById('sidebar-mask');
+        function toggleSidebar() { if (window.innerWidth <= 900) { if (sidebar.classList.contains('open-mobile')) { sidebar.classList.remove('open-mobile'); mask.classList.remove('show'); } else { sidebar.classList.add('open-mobile'); mask.classList.add('show'); } } else sidebar.classList.toggle('collapsed'); }
+        document.getElementById('hamburger-btn').addEventListener('click', toggleSidebar);
+        mask.addEventListener('click', ()=>{ sidebar.classList.remove('open-mobile'); mask.classList.remove('show'); });
+        document.querySelectorAll('.sidebar-tab').forEach(tab => tab.addEventListener('click', function(){
+            document.querySelectorAll('.sidebar-tab').forEach(t=>t.classList.remove('active'));
+            this.classList.add('active');
+            const panelId = this.dataset.panel;
+            document.querySelectorAll('.sidebar-panel').forEach(p=>p.classList.remove('active'));
+            document.getElementById(panelId).classList.add('active');
+            if(panelId==='panel-calendar') renderCalendarWidget();
+            if(panelId==='panel-gantt-edit') refreshGanttEditor();
+            if(panelId==='panel-notes') renderNotesList();
+            if(window.innerWidth<=900) { sidebar.classList.add('open-mobile'); mask.classList.add('show'); }
+        }));
+        document.getElementById('theme-toggle').addEventListener('click', ()=>{
+            if(document.documentElement.getAttribute('data-theme')==='dark') { document.documentElement.removeAttribute('data-theme'); appSettings.theme='light'; }
+            else { document.documentElement.setAttribute('data-theme','dark'); appSettings.theme='dark'; }
+            saveSettings(appSettings);
+        });
+
+        // 提醒
+        const reminderBtn = document.getElementById('reminder-btn');
+        const reminderDropdown = document.getElementById('reminder-dropdown');
+        reminderBtn.addEventListener('click', e => { e.stopPropagation(); reminderDropdown.classList.toggle('show'); loadReminderSettingsToUI(); });
+        document.addEventListener('click', e => { if (!reminderDropdown.contains(e.target) && e.target!==reminderBtn) reminderDropdown.classList.remove('show'); });
+        function loadReminderSettingsToUI() {
+            document.querySelectorAll('input[name="reminder-type"]').forEach(r=>{ if(r.value===appSettings.reminderType) r.checked=true; });
+            document.getElementById('random-interval').value=appSettings.randomInterval;
+            document.getElementById('habit-reminder-time').value=appSettings.habitReminderTime;
+        }
+        function saveReminderSettings() {
+            appSettings.reminderType = document.querySelector('input[name="reminder-type"]:checked').value;
+            appSettings.randomInterval = parseInt(document.getElementById('random-interval').value)||30;
+            appSettings.habitReminderTime = document.getElementById('habit-reminder-time').value||'09:00';
+            saveSettings(appSettings); setupReminder(); reminderDropdown.classList.remove('show'); showToast('✅ 提醒已保存');
+        }
+        let reminderInterval;
+        function setupReminder() {
+            if(reminderInterval) clearInterval(reminderInterval);
+            const dot = document.getElementById('reminder-dot');
+            if(appSettings.reminderType==='none') { dot.style.display='none'; reminderBtn.classList.remove('active-reminder'); return; }
+            dot.style.display='block'; reminderBtn.classList.add('active-reminder');
+            reminderInterval = setInterval(()=>{
+                if(appSettings.reminderType==='random-note') { if(appData.notes.length) { const n = appData.notes[Math.floor(Math.random()*appData.notes.length)]; showToast(`📝 回顾: ${n.title}`); } }
+                else if(appSettings.reminderType==='habit') { const now = new Date(); const [h,m] = appSettings.habitReminderTime.split(':').map(Number); if(now.getHours()===h && now.getMinutes()===m) showToast('✅ 习惯打卡时间!'); }
+            }, 60000);
+        }
+
+        // ==================== 笔记 ====================
+        function renderNotesList(filter='') {
+            let notes = appData.notes.filter(n => !filter || n.title.includes(filter) || (n.content||'').includes(filter));
+            notes.sort((a,b)=>new Date(b.updatedAt||b.createdAt)-new Date(a.updatedAt||a.createdAt));
+            document.getElementById('notes-list').innerHTML = notes.map(n => `
+                <div class="note-item" onclick="openNoteEditor('${n.id}')">
+                    <span class="note-title">${escapeHtml(n.title||'无标题')}</span>
+                    <span class="note-badges"><span class="badge badge-${n.type==='code'?'code':n.type==='review'?'review':'note'}">${n.type==='code'?'代码':n.type==='review'?'复盘':'笔记'}</span></span>
+                    <span class="note-del" onclick="event.stopPropagation();deleteNote('${n.id}')">×</span>
+                </div>`).join('') || '<div style="padding:24px;text-align:center;color:var(--text3)">暂无笔记</div>';
+        }
+        let editingNoteId = null;
+        function openNoteEditor(id=null) {
+            editingNoteId = id;
+            const modal = document.getElementById('note-modal');
+            if(id) {
+                const n = appData.notes.find(n=>n.id===id); if(!n) return;
+                document.getElementById('note-modal-title').textContent='编辑笔记';
+                document.getElementById('note-title-input').value=n.title||'';
+                document.getElementById('note-content-input').value=n.content||'';
+                document.getElementById('note-tags-input').value=(n.tags||[]).join(',');
+                document.getElementById('note-content-input').className = n.type==='code'?'code-area':'';
+                document.querySelectorAll('#note-type-tags .tag-chip').forEach(c=>c.classList.toggle('selected', c.dataset.type===n.type));
+            } else {
+                document.getElementById('note-modal-title').textContent='新建笔记';
+                document.getElementById('note-title-input').value='';
+                document.getElementById('note-content-input').value='';
+                document.getElementById('note-tags-input').value='';
+                document.getElementById('note-content-input').className='';
+                document.querySelectorAll('#note-type-tags .tag-chip').forEach(c=>c.classList.toggle('selected', c.dataset.type==='note'));
+            }
+            modal.style.display='flex';
+        }
+        function closeNoteEditor() { document.getElementById('note-modal').style.display='none'; }
+        function saveNote() {
+            const title = document.getElementById('note-title-input').value.trim();
+            const content = document.getElementById('note-content-input').value;
+            const tags = document.getElementById('note-tags-input').value.split(',').map(t=>t.trim()).filter(Boolean);
+            const type = document.querySelector('#note-type-tags .tag-chip.selected').dataset.type;
+            if(!title&&!content){showToast('请填写内容');return;}
+            if(editingNoteId) {
+                const note = appData.notes.find(n=>n.id===editingNoteId);
+                if(note) { note.title=title; note.content=content; note.tags=tags; note.type=type; note.updatedAt=new Date().toISOString(); }
+            } else {
+                appData.notes.unshift({ id:genId(), title, content, type, tags, createdAt:new Date().toISOString(), updatedAt:new Date().toISOString(), date:getToday() });
+            }
+            saveData(appData); closeNoteEditor(); renderNotesList(); renderCalendarWidget();
+        }
+        function deleteNote(id) { if(!confirm('删除？'))return; appData.notes=appData.notes.filter(n=>n.id!==id); saveData(appData); renderNotesList(); renderCalendarWidget(); }
+        document.getElementById('note-search').addEventListener('input', e=>renderNotesList(e.target.value));
+        document.getElementById('note-type-tags').addEventListener('click', e=>{ if(e.target.classList.contains('tag-chip')){ document.querySelectorAll('#note-type-tags .tag-chip').forEach(c=>c.classList.remove('selected')); e.target.classList.add('selected'); document.getElementById('note-content-input').className = e.target.dataset.type==='code'?'code-area':''; } });
+        document.getElementById('note-modal').addEventListener('click', e=>{ if(e.target===document.getElementById('note-modal')) closeNoteEditor(); });
+        document.getElementById('review-modal').addEventListener('click', e=>{ if(e.target===document.getElementById('review-modal')) closeReviewModal(); });
+
+        // 日历
+        let calYear, calMonth;
+        function renderCalendarWidget() { const n=new Date(); calYear=n.getFullYear(); calMonth=n.getMonth(); renderCalAt(calYear,calMonth); }
+        function renderCalAt(y,m) {
+            const daysInM = new Date(y,m+1,0).getDate(), firstDay = new Date(y,m,1).getDay();
+            const set = new Set(); appData.notes.forEach(n=>{const d=(n.date||n.createdAt||'').split('T')[0];if(d)set.add(d);}); Object.keys(appData.reviews).forEach(d=>set.add(d)); Object.keys(appData.dailyTodos).forEach(d=>{if(appData.dailyTodos[d]?.length)set.add(d);});
+            let html = `<div class="cal-header"><button onclick="navigateCal(-1)">◀</button><span class="cal-month-label">${y}年 ${m+1}月</span><button onclick="navigateCal(1)">▶</button></div><div class="cal-grid">`;
+            ['日','一','二','三','四','五','六'].forEach(d=>html+=`<div class="cal-day-name">${d}</div>`);
+            for(let i=firstDay-1;i>=0;i--){ const d=daysInM-i; const prevM=m===0?11:m-1; const prevY=m===0?y-1:y; const ds=`${prevY}-${String(prevM+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`; html+=`<div class="cal-day other-month" onclick="goToDate('${ds}')">${d}</div>`; }
+            for(let d=1;d<=daysInM;d++){ const ds=`${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`; const isToday=ds===getToday(); let cls='cal-day'; if(isToday)cls+=' today'; if(set.has(ds))cls+=' has-notes'; html+=`<div class="${cls}" onclick="goToDate('${ds}')">${d}</div>`; }
+            const total=firstDay+daysInM, rem=total%7===0?0:7-total%7;
+            for(let d=1;d<=rem;d++){ const nextM=m+2>11?m+2-12:m+2; const nextY=m+2>11?y+1:y; const ds=`${nextY}-${String(nextM+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`; html+=`<div class="cal-day other-month" onclick="goToDate('${ds}')">${d}</div>`; }
+            html+='</div>'; document.getElementById('cal-widget').innerHTML=html;
+        }
+        function navigateCal(d){ calMonth+=d; if(calMonth>11){calMonth=0;calYear++;} if(calMonth<0){calMonth=11;calYear--;} renderCalAt(calYear,calMonth); }
+        function goToDate(ds){ document.querySelector('.sidebar-tab[data-panel="panel-notes"]').click(); document.getElementById('note-search').value=ds; renderNotesList(ds); }
+
+        // 每日Todo
+        function renderDailyTodos() {
+            const today = getToday(); const todos = appData.dailyTodos[today]||[];
+            document.getElementById('daily-todo-list').innerHTML = todos.map((t,i)=>`
+                <div class="todo-item">
+                    <div class="todo-checkbox${t.completed?' done':''}" onclick="toggleDailyTodo(${i})">${t.completed?'✓':''}</div>
+                    <span class="todo-text${t.completed?' done':''}">${escapeHtml(t.title)}</span>
+                    <span class="todo-priority priority-${t.priority||'mid'}"></span>
+                    <span class="todo-del" onclick="deleteDailyTodo(${i})">×</span>
+                </div>`).join('') || '<div style="padding:16px;text-align:center;color:var(--text3)">今天暂无任务</div>';
+        }
+        function addDailyTodo() {
+            const input = document.getElementById('daily-todo-input'), title = input.value.trim();
+            if(!title) return;
+            const today = getToday();
+            if(!appData.dailyTodos[today]) appData.dailyTodos[today]=[];
+            appData.dailyTodos[today].push({id:genId(), title, completed:false, priority:document.getElementById('daily-todo-priority').value});
+            input.value=''; saveData(appData); renderDailyTodos(); renderCalendarWidget();
+        }
+        function toggleDailyTodo(i){ const t=getToday(); if(appData.dailyTodos[t]&&appData.dailyTodos[t][i]){ appData.dailyTodos[t][i].completed=!appData.dailyTodos[t][i].completed; saveData(appData); renderDailyTodos(); } }
+        function deleteDailyTodo(i){ const t=getToday(); if(appData.dailyTodos[t]){ appData.dailyTodos[t].splice(i,1); if(appData.dailyTodos[t].length===0) delete appData.dailyTodos[t]; saveData(appData); renderDailyTodos(); } }
+
+        // 待办
+        function renderTodos() {
+            const sorted = [...appData.todos].sort((a,b)=>{ if(a.completed!==b.completed) return a.completed?1:-1; const o={high:0,mid:1,low:2}; return (o[a.priority]||1)-(o[b.priority]||1); });
+            document.getElementById('todo-list').innerHTML = sorted.map(t=>`
+                <div class="todo-item">
+                    <div class="todo-checkbox${t.completed?' done':''}" onclick="toggleTodo('${t.id}')">${t.completed?'✓':''}</div>
+                    <span class="todo-text${t.completed?' done':''}">${escapeHtml(t.title)}</span>
+                    <span class="todo-priority priority-${t.priority||'mid'}"></span>
+                    <span class="todo-del" onclick="deleteTodo('${t.id}')">×</span>
+                </div>`).join('') || '<div style="padding:16px;text-align:center;color:var(--text3)">暂无待办</div>';
+        }
+        function addTodo() { const t=document.getElementById('todo-input').value.trim(); if(!t)return; appData.todos.push({id:genId(),title:t,completed:false,priority:document.getElementById('todo-priority').value}); document.getElementById('todo-input').value=''; saveData(appData); renderTodos(); }
+        function toggleTodo(id){ const t=appData.todos.find(t=>t.id===id); if(t){t.completed=!t.completed; saveData(appData); renderTodos();} }
+        function deleteTodo(id){ appData.todos=appData.todos.filter(t=>t.id!==id); saveData(appData); renderTodos(); }
+
+        // 复盘
+        function openReviewModal() {
+            const today = getToday(); document.getElementById('review-date-label').textContent=formatDate(today);
+            document.getElementById('review-content').value = (appData.reviews[today]||{}).content||'';
+            renderHabitChecks(today); document.getElementById('review-modal').style.display='flex';
+        }
+        function closeReviewModal(){ document.getElementById('review-modal').style.display='none'; }
+        function renderHabitChecks(date) {
+            const container = document.getElementById('habit-check-list');
+            const review = appData.reviews[date]||{};
+            container.innerHTML = appData.habits.map(h=>`
+                <div class="habit-check-row">
+                    <input type="checkbox" data-habit="${escapeHtml(h.name)}" ${review.habits&&review.habits[h.name]?'checked':''}>
+                    <span>${escapeHtml(h.name)}</span>
+                    <span style="margin-left:auto;cursor:pointer;color:#c55;font-size:14px;" onclick="deleteHabit('${h.id}')">×</span>
+                </div>`).join('') || '<div>暂无习惯</div>';
+        }
+        function addHabitPrompt(){ const n=prompt('习惯名：'); if(n&&n.trim()){ if(appData.habits.some(h=>h.name===n.trim())){showToast('已存在');return;} appData.habits.push({id:genId(),name:n.trim()}); saveData(appData); renderHabitChecks(getToday()); } }
+        function deleteHabit(id){ if(!confirm('删除习惯？'))return; appData.habits=appData.habits.filter(h=>h.id!==id); saveData(appData); renderHabitChecks(getToday()); }
+        function saveReview() {
+            const today = getToday(); const content = document.getElementById('review-content').value;
+            const habits = {}; document.querySelectorAll('#habit-check-list input').forEach(cb=>habits[cb.dataset.habit]=cb.checked);
+            appData.reviews[today] = { content, habits, createdAt: new Date().toISOString() };
+            const existing = appData.notes.find(n=>n.type==='review'&&n.date===today);
+            const full = `# 复盘 ${today}\n\n习惯:\n${Object.entries(habits).map(([k,v])=>`${v?'✅':'❌'} ${k}`).join('\n')}\n\n内容:\n${content}`;
+            if(existing) { existing.content=full; existing.updatedAt=new Date().toISOString(); }
+            else appData.notes.unshift({id:genId(),title:`复盘 ${today}`,content:full,type:'review',tags:['复盘'],createdAt:new Date().toISOString(),updatedAt:new Date().toISOString(),date:today});
+            saveData(appData); closeReviewModal(); renderNotesList(); renderCalendarWidget();
+        }
+
+        // 甘特图
+        function refreshGanttEditor() {
+            const sel = document.getElementById('gantt-project-select'); sel.innerHTML='<option value="">-- 选择 --</option>';
+            const view = document.getElementById('gantt-view-select'); view.innerHTML='<option value="">-- 选择 --</option>';
+            appData.ganttProjects.forEach(p=>{ sel.innerHTML+=`<option value="${p.id}">${escapeHtml(p.name)}</option>`; view.innerHTML+=`<option value="${p.id}">${escapeHtml(p.name)}</option>`; });
+            document.getElementById('gantt-project-list').innerHTML = appData.ganttProjects.map(p=>`<div class="gantt-project-item" onclick="selectGanttProjectById('${p.id}')">${escapeHtml(p.name)} <span class="task-count">(${p.tasks.length}任务)</span><span style="float:right;color:#c55;" onclick="event.stopPropagation();deleteGanttProject('${p.id}')">×</span></div>`).join('');
+            if(appData.activeGanttProjectId){ sel.value=appData.activeGanttProjectId; view.value=appData.activeGanttProjectId; renderGanttTasksMini(); }
+            renderGantt();
+        }
+        function selectGanttProject(){ const id=document.getElementById('gantt-project-select').value; if(id){ appData.activeGanttProjectId=id; saveData(appData); refreshGanttEditor(); } }
+        function selectGanttProjectById(id){ appData.activeGanttProjectId=id; saveData(appData); refreshGanttEditor(); }
+        function createGanttProject(){ const n=document.getElementById('new-project-name').value.trim(); if(!n)return; const p={id:genId(),name:n,tasks:[],createdAt:new Date().toISOString()}; appData.ganttProjects.push(p); appData.activeGanttProjectId=p.id; saveData(appData); refreshGanttEditor(); }
+        function deleteGanttProject(id){ if(!confirm('删除项目？'))return; appData.ganttProjects=appData.ganttProjects.filter(p=>p.id!==id); if(appData.activeGanttProjectId===id)appData.activeGanttProjectId=null; saveData(appData); refreshGanttEditor(); }
+        function addTaskToProject(){ if(!appData.activeGanttProjectId){showToast('请先选择项目');return;} const p=appData.ganttProjects.find(p=>p.id===appData.activeGanttProjectId); const n=document.getElementById('new-task-name').value.trim(); const s=document.getElementById('new-task-start').value; const e=document.getElementById('new-task-end').value; if(!n||!s||!e){showToast('填完整');return;} p.tasks.push({id:genId(),name:n,startDate:s,endDate:e,progress:parseInt(document.getElementById('new-task-progress').value)||0,color:document.getElementById('new-task-color').value}); saveData(appData); refreshGanttEditor(); }
+        function deleteGanttTask(tid){ const p=appData.ganttProjects.find(p=>p.id===appData.activeGanttProjectId); if(p){ p.tasks=p.tasks.filter(t=>t.id!==tid); saveData(appData); refreshGanttEditor(); } }
+        function renderGanttTasksMini(){ const c=document.getElementById('gantt-tasks-mini-list'); if(!appData.activeGanttProjectId){c.innerHTML='';return;} const p=appData.ganttProjects.find(p=>p.id===appData.activeGanttProjectId); if(!p||!p.tasks.length){c.innerHTML='<div style="padding:8px;color:var(--text3)">无任务</div>';return;} c.innerHTML=p.tasks.map(t=>`<div style="display:flex;align-items:center;gap:6px;padding:8px;"><span style="width:12px;height:12px;background:${t.color};border-radius:2px;"></span>${escapeHtml(t.name)} <span style="margin-left:auto;font-size:11px;">${t.progress}%</span><span onclick="deleteGanttTask('${t.id}')" style="color:#c55;cursor:pointer;">×</span></div>`).join(''); }
+        function loadGanttView(){ const v=document.getElementById('gantt-view-select').value; if(v){ appData.activeGanttProjectId=v; saveData(appData); refreshGanttEditor(); } renderGantt(); }
+        function renderGantt() {
+            const projId = document.getElementById('gantt-view-select').value || appData.activeGanttProjectId;
+            if(!projId) { document.getElementById('gantt-chart').innerHTML='<div style="padding:40px;text-align:center;color:var(--text3)">请选择项目</div>'; return; }
+            const proj = appData.ganttProjects.find(p=>p.id===projId);
+            if(!proj||!proj.tasks.length) { document.getElementById('gantt-chart').innerHTML='<div style="padding:40px;text-align:center;color:var(--text3)">无任务</div>'; return; }
+            let min=null,max=null; proj.tasks.forEach(t=>{if(!min||t.startDate<min)min=t.startDate;if(!max||t.endDate>max)max=t.endDate;});
+            const start = new Date(min); start.setDate(start.getDate()-2); const end = new Date(max); end.setDate(end.getDate()+3);
+            const days=[]; for(let d=new Date(start); d<=end; d.setDate(d.getDate()+1)) days.push(d.toISOString().split('T')[0]);
+            const dayW=Math.max(28, Math.floor(600/days.length));
+            let h=`<div class="gantt-header-row"><div class="gantt-header-label"></div><div class="gantt-header-days">`;
+            days.forEach(d=>{ const cls='gantt-day-header'+(new Date(d).getDay()%6===0?' weekend':'')+(d===getToday()?' today-col':''); h+=`<div class="${cls}" style="min-width:${dayW}px;">${parseInt(d.split('-')[2])}</div>`; });
+            h+='</div></div>';
+            proj.tasks.forEach(t=>{
+                const sd=new Date(t.startDate), ed=new Date(t.endDate);
+                const left = Math.max(0, Math.ceil((sd-start)/(86400000))) * dayW;
+                const width = Math.max(1, Math.ceil((ed-sd)/86400000)+1) * dayW;
+                h+=`<div class="gantt-row"><div class="gantt-label">${escapeHtml(t.name)}</div><div class="gantt-timeline" style="min-width:${days.length*dayW}px;"><div class="gantt-bar" style="left:${left}px;width:${width}px;background:${t.color}"><div class="progress-fill" style="width:${t.progress}%"></div><span>${t.progress}%</span></div></div></div>`;
+            });
+            document.getElementById('gantt-chart').innerHTML=h;
+        }
+
+        // 最终启动
+        initApp();
+    </script>
+</body>
+</html>
