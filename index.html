@@ -5,22 +5,22 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>Hypomnema / Reverse Chronicle</title>
+    <title>Hypomnema · 司辰手记</title>
     <style>
         :root {
             --bg: #1a1714;
-            --surface: rgba(25,22,20,0.8);
-            --surface2: rgba(15,13,11,0.5);
+            --surface: rgba(25,22,20,0.75);
+            --surface2: rgba(15,13,11,0.65);
             --text: #d4cfc6;
             --text2: #a49e94;
             --text3: #746e66;
             --accent: #C9A961;
             --accent2: #E8C97A;
-            --accent-light: rgba(201,169,97,0.15);
-            --border: rgba(201,169,97,0.2);
-            --border-light: rgba(255,255,255,0.06);
-            --shadow: 0 8px 32px rgba(0,0,0,0.6);
-            --shadow-lg: 0 16px 48px rgba(0,0,0,0.7);
+            --accent-light: rgba(201,169,97,0.12);
+            --border: rgba(201,169,97,0.25);
+            --border-light: rgba(255,255,255,0.05);
+            --shadow: 0 8px 32px rgba(0,0,0,0.5);
+            --shadow-lg: 0 20px 40px rgba(0,0,0,0.6);
             --radius: 2px;
             --radius-sm: 4px;
             --radius-xs: 2px;
@@ -30,232 +30,203 @@
             --sidebar-w: 360px;
             --header-h: 56px;
             --gantt-row-h: 38px;
-            --todo-card-bg: rgba(20,17,14,0.8);
-            --code-bg: rgba(0,0,0,0.4);
-            --tag-bg: rgba(201,169,97,0.15);
-            --tag-text: #C9A961;
-            --frosted-glass: blur(12px) saturate(180%);
+            --frosted-glass: blur(14px) saturate(180%);
             --safe-top: env(safe-area-inset-top);
         }
+        /* 深色模式纹理 — 鎏金黑绒布 */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: -2;
+            background: var(--bg);
+        }
+        body::after {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: -1;
+            opacity: 0.6;
+            background-image: 
+                repeating-linear-gradient(45deg, rgba(201,169,97,0.02) 0px, rgba(201,169,97,0.02) 2px, transparent 2px, transparent 8px),
+                radial-gradient(circle at 30% 40%, rgba(201,169,97,0.05) 1px, transparent 1px);
+            background-size: 16px 16px, 32px 32px;
+            mix-blend-mode: overlay;
+        }
+        [data-theme="light"]::after {
+            opacity: 0.35;
+            background-image: 
+                linear-gradient(112deg, rgba(100,120,140,0.08) 0%, rgba(80,100,125,0.02) 100%),
+                repeating-linear-gradient(90deg, rgba(80,90,110,0.04) 0px, rgba(80,90,110,0.04) 1px, transparent 1px, transparent 12px),
+                repeating-linear-gradient(0deg, rgba(100,110,125,0.03) 0px, rgba(100,110,125,0.03) 1px, transparent 1px, transparent 12px);
+            background-size: 100% 100%, 24px 24px, 24px 24px;
+            mix-blend-mode: multiply;
+        }
         [data-theme="light"] {
-            --bg: #e8e4e0;
-            --surface: rgba(245,242,238,0.85);
-            --surface2: rgba(230,225,220,0.7);
-            --text: #2c2416;
-            --text2: #4a4038;
-            --text3: #6b6058;
-            --accent: #4A5D6F;
-            --accent2: #7A8B9A;
-            --accent-light: rgba(74,93,111,0.1);
-            --border: rgba(74,93,111,0.25);
-            --border-light: rgba(74,93,111,0.08);
-            --shadow: 0 8px 32px rgba(0,0,0,0.1);
-            --shadow-lg: 0 16px 48px rgba(0,0,0,0.15);
-            --todo-card-bg: rgba(255,252,248,0.9);
-            --code-bg: #f4f1ec;
-            --tag-bg: rgba(74,93,111,0.1);
-            --tag-text: #4A5D6F;
-            --frosted-glass: blur(12px) saturate(100%);
+            --bg: #eef2f5;
+            --surface: rgba(245, 242, 238, 0.82);
+            --surface2: rgba(235, 230, 225, 0.7);
+            --text: #2c2a2a;
+            --text2: #4a4242;
+            --text3: #7a6e6a;
+            --accent: #5F7F9E;
+            --accent2: #8EA3B9;
+            --accent-light: rgba(95,127,158,0.1);
+            --border: rgba(95,127,158,0.3);
+            --border-light: rgba(95,127,158,0.1);
+            --shadow: 0 8px 24px rgba(0,0,0,0.08);
+            --shadow-lg: 0 16px 40px rgba(0,0,0,0.12);
+        }
+        /* 鎏金细闪 */
+        [data-theme="dark"]::after {
+            background-image: 
+                repeating-linear-gradient(115deg, rgba(201,169,97,0.04) 0px, rgba(201,169,97,0.04) 1px, transparent 1px, transparent 6px),
+                radial-gradient(ellipse at 70% 20%, rgba(201,169,97,0.08) 2px, transparent 2px);
+            background-size: 14px 14px, 40px 40px;
+            mix-blend-mode: soft-light;
         }
         * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; -webkit-user-select:none; user-select:none; }
-        input, textarea, select { -webkit-user-select:text; user-select:text; font-family:var(--font); background:rgba(255,255,255,0.05); border:1px solid var(--border); color:var(--text); padding:10px 12px; border-radius:var(--radius-xs); outline:none; transition:var(--transition); }
+        input, textarea, select { -webkit-user-select:text; user-select:text; font-family:var(--font); background:rgba(255,255,255,0.06); border:1px solid var(--border); color:var(--text); padding:10px 12px; border-radius:var(--radius-xs); outline:none; transition:var(--transition); }
         [data-theme="light"] input, [data-theme="light"] textarea, [data-theme="light"] select { background:rgba(255,255,255,0.7); }
-        input:focus, textarea:focus, select:focus { border-color:var(--accent); box-shadow:0 0 12px rgba(201,169,97,0.15); }
-        body { font-family:var(--font); background:var(--bg); color:var(--text); height:100vh; overflow:hidden; display:flex; padding-top:var(--safe-top); }
-        .sidebar { width:var(--sidebar-w); height:100vh; background:var(--surface); backdrop-filter:var(--frosted-glass); -webkit-backdrop-filter:var(--frosted-glass); border-right:1px solid var(--border); display:flex; flex-direction:column; transition:transform 0.3s; z-index:100; flex-shrink:0; box-shadow:var(--shadow); }
-        .sidebar.collapsed { transform:translateX(-100%); width:0; }
-        .sidebar-tabs { display:flex; border-bottom:1px solid var(--border); background:rgba(0,0,0,0.1); }
-        .sidebar-tab { flex:1; padding:14px 6px; text-align:center; cursor:pointer; font-size:13px; color:var(--text3); border-bottom:1px solid transparent; transition:var(--transition); letter-spacing:1px; text-transform:uppercase; }
-        .sidebar-tab:hover, .sidebar-tab.active { color:var(--accent); border-bottom-color:var(--accent); }
-        .sidebar-panel { flex:1; overflow-y:auto; display:none; flex-direction:column; padding:12px; -webkit-overflow-scrolling:touch; }
-        .sidebar-panel.active { display:flex; }
-        .sidebar-panel::-webkit-scrollbar { width:4px; }
-        .sidebar-panel::-webkit-scrollbar-thumb { background:var(--accent); border-radius:2px; }
-        .cal-widget { padding:8px; }
-        .cal-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; padding:0 4px; }
-        .cal-header button { background:none; border:1px solid var(--border); color:var(--accent); font-size:16px; padding:6px 12px; cursor:pointer; border-radius:var(--radius-xs); transition:var(--transition); }
-        .cal-header button:hover { background:var(--accent); color:#0f0c0a; }
-        .cal-month-label { font-weight:500; font-size:16px; color:var(--accent); letter-spacing:2px; }
-        .cal-grid { display:grid; grid-template-columns:repeat(7, 1fr); gap:4px; text-align:center; font-size:12px; }
-        .cal-day-name { color:var(--text3); padding:6px 0; font-weight:400; font-size:10px; }
-        .cal-day { position: relative; padding:10px 4px; cursor:pointer; border-radius:var(--radius-xs); color:var(--text2); min-width:32px; min-height:32px; display:flex; align-items:center; justify-content:center; transition:var(--transition); border:1px solid transparent; }
-        .cal-day:hover { border-color:var(--accent); color:var(--accent); }
-        .cal-day.today { background:var(--accent); color:#0f0c0a; font-weight:600; }
-        .cal-day.has-notes::after { content:''; position:absolute; bottom:4px; left:50%; transform:translateX(-50%); width:4px; height:4px; border-radius:50%; background:var(--accent2); }
-        .cal-day.today.has-notes::after { background:#0f0c0a; }
-        .cal-day.other-month { opacity:0.3; }
-        .notes-list-header { display:flex; gap:6px; padding:4px 0 12px; }
-        .notes-list-header input { flex:1; }
-        .notes-list { flex:1; overflow-y:auto; display:flex; flex-direction:column; gap:4px; }
-        .note-item { padding:12px; border-radius:var(--radius-xs); cursor:pointer; border-left:2px solid transparent; font-size:14px; display:flex; justify-content:space-between; align-items:center; background:var(--surface2); backdrop-filter:blur(4px); transition:var(--transition); }
-        .note-item:hover { background:var(--accent-light); border-left-color:var(--accent); }
-        .note-item .note-title { flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-        .note-item .note-badges { display:flex; gap:4px; }
-        .badge { font-size:10px; padding:2px 8px; border-radius:10px; background:var(--tag-bg); color:var(--tag-text); }
-        .note-item .note-del { visibility:hidden; cursor:pointer; color:#8B0000; font-size:18px; padding:4px 8px; }
-        .note-item:hover .note-del { visibility:visible; }
-        .btn { padding:10px 18px; font-size:13px; border:1px solid var(--accent); background:transparent; color:var(--accent); cursor:pointer; font-weight:400; letter-spacing:1px; border-radius:var(--radius-xs); transition:var(--transition); white-space:nowrap; }
-        .btn:hover { background:var(--accent); color:var(--bg); }
-        .btn-accent { background:var(--accent); color:var(--bg); }
-        .btn-accent:hover { background:var(--accent2); }
-        .btn-outline { background:transparent; border:1px solid var(--border); color:var(--text2); }
-        .btn-outline:hover { border-color:var(--accent); color:var(--accent); }
-        .gantt-editor-section { padding:4px 0; }
-        .gantt-editor-section h4 { font-size:14px; color:var(--accent); margin-bottom:8px; letter-spacing:1px; }
-        .gantt-editor-section select { width:100%; padding:10px; border:1px solid var(--border); border-radius:var(--radius-xs); font-size:14px; background:rgba(10,8,6,0.7); color:var(--text); outline:none; margin-bottom:8px; }
-        .gantt-task-row { display:flex; gap:6px; margin-bottom:8px; flex-wrap:wrap; }
-        .gantt-task-row input { flex:1; min-width:80px; }
-        .gantt-task-row input[type="date"] { min-width:110px; }
-        .gantt-project-list { max-height:200px; overflow-y:auto; margin:8px 0; }
-        .gantt-project-item { padding:10px; margin:4px 0; border-radius:var(--radius-xs); cursor:pointer; background:var(--surface2); border-left:2px solid var(--accent); transition:var(--transition); font-size:13px; display:flex; justify-content:space-between; align-items:center; }
-        .gantt-project-item:hover { background:var(--accent-light); }
-        .gantt-project-item .task-count { font-size:10px; color:var(--text3); }
-        .main-area { flex:1; display:flex; flex-direction:column; height:100vh; overflow:hidden; min-width:0; }
-        .sidebar-mask { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); backdrop-filter:blur(4px); z-index:99; }
-        .sidebar-mask.show { display:block; }
-        .top-bar { height:var(--header-h); display:flex; align-items:center; padding:0 20px; gap:16px; border-bottom:1px solid var(--border); background:var(--surface); backdrop-filter:var(--frosted-glass); flex-shrink:0; z-index:50; }
-        .top-bar .hamburger { cursor:pointer; font-size:20px; padding:8px; background:none; border:none; color:var(--accent); }
-        .top-bar .page-title { font-weight:400; font-size:18px; letter-spacing:4px; color:var(--accent); }
-        .spacer { flex:1; }
-        .reminder-btn, .theme-toggle { cursor:pointer; font-size:20px; padding:8px; background:none; border:none; color:var(--text2); transition:var(--transition); position:relative; }
-        .reminder-btn:hover, .theme-toggle:hover { color:var(--accent); }
-        .reminder-btn.active-reminder { color:var(--accent); animation:pulse-reminder 2s infinite; }
-        @keyframes pulse-reminder { 0%,100%{opacity:1;} 50%{opacity:0.5;} }
-        .reminder-dropdown { display:none; position:absolute; top:44px; right:0; background:var(--surface); backdrop-filter:var(--frosted-glass); border:1px solid var(--border); padding:16px; z-index:200; min-width:260px; border-radius:var(--radius-sm); box-shadow:var(--shadow-lg); }
-        .reminder-dropdown.show { display:block; }
-        .reminder-dropdown label { display:flex; align-items:center; gap:8px; margin:8px 0; font-size:13px; color:var(--text2); cursor:pointer; }
-        .reminder-dropdown input[type="number"], .reminder-dropdown input[type="time"] { width:80px; padding:6px; }
-        .content-area { flex:1; overflow-y:auto; padding:20px; gap:20px; display:flex; flex-direction:column; -webkit-overflow-scrolling:touch; }
-        .content-area::-webkit-scrollbar { width:6px; }
-        .content-area::-webkit-scrollbar-thumb { background:var(--accent); border-radius:3px; }
-        .top-panels { display:flex; gap:20px; min-height:280px; flex-shrink:0; }
-        .panel { flex:1; background:var(--surface); backdrop-filter:var(--frosted-glass); border:1px solid var(--border); border-radius:var(--radius-sm); padding:20px; display:flex; flex-direction:column; overflow:hidden; }
-        .panel-header { font-size:16px; font-weight:400; color:var(--accent); letter-spacing:2px; margin-bottom:16px; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); padding-bottom:12px; }
-        .panel-header .date-label { font-size:12px; color:var(--text3); font-weight:400; }
-        .panel-body { flex:1; overflow-y:auto; display:flex; flex-direction:column; gap:4px; }
-        .panel-body::-webkit-scrollbar { width:3px; }
-        .panel-body::-webkit-scrollbar-thumb { background:var(--border); border-radius:2px; }
-        .todo-item { display:flex; align-items:center; gap:10px; padding:10px 0; border-bottom:1px solid rgba(255,255,255,0.04); transition:var(--transition); }
-        .todo-item:hover { background:rgba(201,169,97,0.05); }
-        .todo-checkbox { width:18px; height:18px; border-radius:50%; border:1px solid var(--accent); flex-shrink:0; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:10px; color:transparent; transition:var(--transition); }
-        .todo-checkbox.done { background:var(--accent); color:var(--bg); }
-        .todo-text { flex:1; font-size:14px; color:var(--text); }
-        .todo-text.done { text-decoration:line-through; opacity:0.4; }
-        .todo-priority { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
-        .priority-high { background:#8B0000; } .priority-mid { background:#C9A961; } .priority-low { background:#5b7a6a; }
-        .todo-del { visibility:hidden; cursor:pointer; color:#8B0000; font-size:16px; padding:4px 8px; transition:var(--transition); }
-        .todo-item:hover .todo-del { visibility:visible; }
-        .add-todo-row { display:flex; gap:6px; padding:8px 0 0; align-items:center; }
-        .add-todo-row input { flex:1; }
-        .add-todo-row select { max-width:70px; }
-        .review-entry { display:flex; align-items:center; gap:8px; padding:12px; margin-top:12px; background:linear-gradient(135deg, rgba(201,169,97,0.1), rgba(201,169,97,0.05)); border-radius:var(--radius-xs); cursor:pointer; border:1px dashed var(--accent); font-size:14px; color:var(--accent); transition:var(--transition); }
-        .review-entry:hover { background:rgba(201,169,97,0.2); }
-        .note-block { margin-top: 16px; border-top: 1px solid var(--border-light); padding-top: 12px; }
-        .note-block-title { font-size: 13px; color: var(--text2); letter-spacing: 1px; margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
-        .note-preview-item { padding: 8px 6px; margin-bottom: 4px; border-radius: var(--radius-xs); background: var(--surface2); cursor: pointer; transition: 0.2s; font-size: 13px; border-left: 2px solid var(--accent); }
-        .note-preview-item:hover { background: var(--accent-light); }
-        .note-preview-title { font-weight: 500; color: var(--accent); }
-        .note-preview-meta { font-size: 10px; color: var(--text3); margin-top: 4px; }
-        .gantt-panel { flex:1; min-height:320px; background:var(--surface); backdrop-filter:var(--frosted-glass); border:1px solid var(--border); border-radius:var(--radius-sm); padding:20px; display:flex; flex-direction:column; overflow:hidden; }
-        .gantt-panel .panel-header { display:flex; gap:12px; align-items:center; flex-wrap:wrap; }
-        .gantt-viewport { flex:1; overflow:auto; -webkit-overflow-scrolling:touch; }
-        .gantt-viewport::-webkit-scrollbar { height:6px; width:6px; }
-        .gantt-viewport::-webkit-scrollbar-thumb { background:var(--accent); border-radius:3px; }
-        .gantt-chart { display:flex; flex-direction:column; min-width:fit-content; flex:1; }
-        .gantt-row { display:flex; align-items:center; height:var(--gantt-row-h); border-bottom:1px solid rgba(255,255,255,0.04); flex-shrink:0; position:relative; }
-        .gantt-label { width:150px; flex-shrink:0; padding:0 12px; font-size:13px; font-weight:400; color:var(--text); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; background:rgba(0,0,0,0.3); position:sticky; left:0; z-index:2; height:100%; display:flex; align-items:center; border-right:1px solid var(--border); }
-        .gantt-timeline { position:relative; flex:1; height:100%; min-width:600px; }
-        .gantt-bar { position:absolute; top:6px; height:calc(var(--gantt-row-h) - 12px); border-radius:2px; cursor:pointer; display:flex; align-items:center; padding:0 8px; font-size:10px; color:#fff; min-width:20px; box-shadow:0 0 8px rgba(0,0,0,0.5); transition:filter 0.2s; }
-        .gantt-bar:hover { filter:brightness(1.2); }
-        .gantt-bar .progress-fill { position:absolute; left:0; top:0; height:100%; background:rgba(255,255,255,0.2); border-radius:2px 0 0 2px; pointer-events:none; }
-        .gantt-bar .resize-handle { position:absolute; right:0; top:0; width:8px; height:100%; cursor:ew-resize; background:transparent; z-index:3; }
-        .modal-overlay { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); z-index:300; display:flex; align-items:center; justify-content:center; padding:12px; }
-        .modal { background:var(--surface); backdrop-filter:var(--frosted-glass); -webkit-backdrop-filter:var(--frosted-glass); border:1px solid var(--accent); border-radius:var(--radius-sm); box-shadow:var(--shadow-lg); padding:24px; max-width:560px; width:100%; max-height:85vh; overflow-y:auto; }
-        .modal h3 { margin-bottom:16px; color:var(--accent); font-weight:400; letter-spacing:2px; font-size:18px; }
-        .modal input, .modal textarea, .modal select { margin-bottom:12px; width:100%; }
-        .modal textarea { min-height:180px; resize:vertical; }
-        .modal textarea.code-area { font-family:var(--font-mono); background:var(--code-bg); }
-        .btn-row { display:flex; gap:8px; justify-content:flex-end; margin-top:8px; flex-wrap:wrap; }
-        .habit-check-row { display:flex; align-items:center; gap:10px; padding:10px 0; border-bottom:1px solid rgba(255,255,255,0.04); font-size:14px; }
-        .toast { position:fixed; bottom:32px; right:32px; background:var(--accent); color:var(--bg); padding:12px 24px; border-radius:2px; font-size:14px; z-index:999; animation:fadeInUp 0.4s ease; letter-spacing:1px; box-shadow:var(--shadow); }
-        @keyframes fadeInUp { from{opacity:0;transform:translateY(20px);} to{opacity:1;transform:translateY(0);} }
+        input:focus, textarea:focus, select:focus { border-color:var(--accent); box-shadow:0 0 12px rgba(201,169,97,0.2); }
+        body { font-family:var(--font); background:var(--bg); color:var(--text); height:100vh; overflow:hidden; display:flex; padding-top:var(--safe-top); position:relative; }
+        /* loading 遮罩 — 重返未来风格 */
+        .loading-veil {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: var(--bg);
+            backdrop-filter: blur(12px);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            gap: 24px;
+            transition: opacity 0.6s ease;
+            font-family: var(--font);
+            letter-spacing: 2px;
+        }
+        .loading-veil.hide {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+        .loading-veil .hourglass-symbol {
+            font-size: 48px;
+            color: var(--accent);
+            animation: slowPulse 2s infinite;
+        }
+        .loading-veil .loading-quote {
+            font-size: 14px;
+            color: var(--text2);
+            border-left: 2px solid var(--accent);
+            padding-left: 16px;
+            font-style: italic;
+        }
+        @keyframes slowPulse {
+            0% { opacity: 0.4; text-shadow: 0 0 0px transparent; }
+            100% { opacity: 1; text-shadow: 0 0 6px var(--accent2); }
+        }
+        /* 侧边栏、主区域样式继承原有并优化 */
+        .sidebar { background: var(--surface); backdrop-filter: var(--frosted-glass); border-right:1px solid var(--border); box-shadow:var(--shadow); }
+        .panel, .gantt-panel { background: var(--surface); backdrop-filter: var(--frosted-glass); border:1px solid var(--border); }
+        .note-item, .gantt-project-item { background: var(--surface2); }
+        .tag-chip { background: var(--tag-bg); color: var(--tag-text); }
+        .sidebar, .main-area { position: relative; z-index: 1; }
+        
+        /* 其余样式保持原有精简，仅微调标题质感 */
+        .panel-header { letter-spacing: 2px; font-weight: 400; text-transform: uppercase; }
+        .note-block-title { font-size: 12px; letter-spacing: 1px; color: var(--accent); border-bottom: 1px dashed var(--border); display: inline-block; margin-bottom: 12px; }
+        .review-entry { background: linear-gradient(135deg, var(--accent-light), transparent); }
+        .modal { border-left: 3px solid var(--accent); }
+        .btn-accent { box-shadow: 0 1px 4px rgba(0,0,0,0.2); transition: all 0.2s; }
+        .btn-accent:hover { filter: brightness(1.05); transform: translateY(-1px); }
         @media (max-width: 900px) {
-            .sidebar { position:fixed; left:0; top:0; z-index:200; width:300px; transform:translateX(-100%); height:100vh; padding-top:env(safe-area-inset-top); }
-            .sidebar.open-mobile { transform:translateX(0); }
-            .top-panels { flex-direction:column; min-height:auto; }
-            .modal { max-width:95vw; padding:16px; }
-            .gantt-label { width:100px; font-size:11px; }
-            .gantt-header-label { width:100px; }
-            .top-bar .page-title { font-size:14px; letter-spacing:2px; }
-            .top-bar { padding-top:env(safe-area-inset-top); height:calc(var(--header-h) + env(safe-area-inset-top)); }
+            .sidebar { width: 300px; }
+            .gantt-label { width: 100px; }
         }
     </style>
 </head>
 <body>
-    <div class="sidebar-mask" id="sidebar-mask"></div>
+<div class="loading-veil" id="loading-veil">
+    <div class="hourglass-symbol">⌛</div>
+    <div class="loading-quote" id="loading-quote-text">归拢时序，拂去尘埃……</div>
+</div>
 
-    <aside class="sidebar" id="sidebar">
-        <div class="sidebar-tabs">
-            <div class="sidebar-tab active" data-panel="panel-notes">纪事</div>
-            <div class="sidebar-tab" data-panel="panel-calendar">月历</div>
-            <div class="sidebar-tab" data-panel="panel-gantt-edit">时序</div>
-        </div>
-        <div class="sidebar-panel active" id="panel-notes">
-            <div class="notes-list-header">
-                <input type="text" id="note-search" placeholder="搜刮记忆…">
-                <button class="btn" onclick="openNoteEditor()">＋</button>
-            </div>
-            <div class="notes-list" id="notes-list"></div>
-        </div>
-        <div class="sidebar-panel" id="panel-calendar">
-            <div class="cal-widget" id="cal-widget"></div>
-            <div style="font-size:11px;color:var(--text3);padding:8px;text-align:center;">点击一日，查看残片</div>
-        </div>
-        <div class="sidebar-panel" id="panel-gantt-edit">
-            <div class="gantt-editor-section"><h4>时序 · 项目</h4><select id="gantt-project-select" onchange="selectGanttProject()"><option value="">-- 选本 --</option></select><div class="gantt-task-row"><input type="text" id="new-project-name" placeholder="新项目名称"><button class="btn btn-accent" onclick="createGanttProject()">创</button></div><div class="gantt-project-list" id="gantt-project-list"></div><hr style="border:none;border-top:1px solid var(--border);margin:12px 0;"><h4>编纂任务</h4><div class="gantt-task-row"><input type="text" id="new-task-name" placeholder="任务名"></div><div class="gantt-task-row"><input type="date" id="new-task-start"><input type="date" id="new-task-end"></div><div class="gantt-task-row"><input type="number" id="new-task-progress" placeholder="进度%" min="0" max="100" value="0" style="max-width:70px;"><select id="new-task-color"><option value="#C9A961">琥珀金</option><option value="#4A5D6F">烟蓝</option><option value="#8B0000">血</option><option value="#5b7a6a">苔绿</option></select><button class="btn btn-accent" id="task-save-btn" onclick="addTaskToProject()">添加</button><button class="btn btn-outline" id="task-cancel-btn" onclick="cancelEditTask()" style="display:none;">取消</button></div><div id="gantt-tasks-mini-list" style="max-height:200px;overflow-y:auto;margin-top:6px;"></div></div>
-        </div>
-    </aside>
-
-    <div class="main-area">
-        <div class="top-bar"><button class="hamburger" id="hamburger-btn">☰</button><span class="page-title" id="page-title">Reverse Chronicle</span><span class="spacer"></span><button class="theme-toggle" id="theme-toggle">◑</button><button class="reminder-btn" id="reminder-btn">⏳<span id="reminder-dot" style="display:none;"></span></button><div class="reminder-dropdown" id="reminder-dropdown"><strong style="color:var(--accent);letter-spacing:1px;">⏰ 提醒</strong><label><input type="radio" name="reminder-type" value="none" checked> 关闭</label><label><input type="radio" name="reminder-type" value="random-note"> 📜 随机纪事</label><label style="margin-left:20px;font-size:11px;">间隔(分): <input type="number" id="random-interval" value="30" min="5"></label><label><input type="radio" name="reminder-type" value="habit"> ✅ 习惯</label><label style="margin-left:20px;font-size:11px;">时间: <input type="time" id="habit-reminder-time" value="09:00"></label><button class="btn btn-accent" onclick="saveReminderSettings()" style="width:100%;margin-top:8px;">保存</button></div></div>
-
-        <div class="content-area">
-            <div class="top-panels">
-                <div class="panel">
-                    <div class="panel-header" id="date-panel-header">☉ 择日残片 <span class="date-label" id="selected-date-label"></span></div>
-                    <div class="panel-body" id="daily-todo-list"></div>
-                    <div class="add-todo-row"><input type="text" id="daily-todo-input" placeholder="添加当日任务…"><select id="daily-todo-priority" style="max-width:60px;"><option value="low">轻</option><option value="mid" selected>中</option><option value="high">重</option></select><button class="btn btn-accent" onclick="addDailyTodo()">＋</button></div>
-                    <div class="review-entry" onclick="openReviewModal()">→ 夜间复盘</div>
-                    <div class="note-block"><div class="note-block-title">✍️ 此日笔迹</div><div id="date-related-notes"></div></div>
-                </div>
-                <div class="panel"><div class="panel-header">⌛ 待办列</div><div class="panel-body" id="todo-list"></div><div class="add-todo-row"><input type="text" id="todo-input" placeholder="新待办…"><select id="todo-priority" style="max-width:60px;"><option value="low">轻</option><option value="mid" selected>中</option><option value="high">重</option></select><button class="btn btn-accent" onclick="addTodo()">＋</button></div></div>
-            </div>
-            <div class="gantt-panel"><div class="panel-header">⟁ 甘特图<select id="gantt-view-select" onchange="loadGanttView()"><option value="">-- 选项目 --</option></select><span id="gantt-date-range" style="font-size:11px;color:var(--text3);"></span></div><div class="gantt-viewport" id="gantt-viewport"><div class="gantt-chart" id="gantt-chart"><div style="padding:40px;text-align:center;color:var(--text3);">请在侧栏「时序」创建项目</div></div></div></div>
-        </div>
+<div class="sidebar-mask" id="sidebar-mask"></div>
+<aside class="sidebar" id="sidebar">
+    <div class="sidebar-tabs">
+        <div class="sidebar-tab active" data-panel="panel-notes">纪事</div>
+        <div class="sidebar-tab" data-panel="panel-calendar">月历</div>
+        <div class="sidebar-tab" data-panel="panel-gantt-edit">时序</div>
     </div>
+    <div class="sidebar-panel active" id="panel-notes">
+        <div class="notes-list-header"><input type="text" id="note-search" placeholder="搜刮记忆残响…"><button class="btn" onclick="openNoteEditor()">＋</button></div>
+        <div class="notes-list" id="notes-list"></div>
+    </div>
+    <div class="sidebar-panel" id="panel-calendar">
+        <div class="cal-widget" id="cal-widget"></div>
+        <div style="font-size:11px;color:var(--text3);padding:8px;text-align:center;">点击一日，窥见那天的残片</div>
+    </div>
+    <div class="sidebar-panel" id="panel-gantt-edit">
+        <div class="gantt-editor-section"><h4>时序 · 项目</h4><select id="gantt-project-select" onchange="selectGanttProject()"><option value="">-- 选本 --</option></select><div class="gantt-task-row"><input type="text" id="new-project-name" placeholder="新项目名称"><button class="btn btn-accent" onclick="createGanttProject()">创</button></div><div class="gantt-project-list" id="gantt-project-list"></div><hr style="border:none;border-top:1px solid var(--border);margin:12px 0;"><h4>编纂任务</h4><div class="gantt-task-row"><input type="text" id="new-task-name" placeholder="任务名"></div><div class="gantt-task-row"><input type="date" id="new-task-start"><input type="date" id="new-task-end"></div><div class="gantt-task-row"><input type="number" id="new-task-progress" placeholder="进度%" min="0" max="100" value="0" style="max-width:70px;"><select id="new-task-color"><option value="#C9A961">琥珀金</option><option value="#4A5D6F">烟蓝</option><option value="#8B0000">血</option><option value="#5b7a6a">苔绿</option></select><button class="btn btn-accent" id="task-save-btn" onclick="addTaskToProject()">添加</button><button class="btn btn-outline" id="task-cancel-btn" onclick="cancelEditTask()" style="display:none;">取消</button></div><div id="gantt-tasks-mini-list" style="max-height:200px;overflow-y:auto;margin-top:6px;"></div></div>
+    </div>
+</aside>
 
-    <div class="modal-overlay" id="note-modal" style="display:none;"><div class="modal"><h3 id="note-modal-title">新建纪事</h3><input type="text" id="note-title-input" placeholder="标题"><div class="tag-list" id="note-type-tags"><span class="tag-chip selected" data-type="note">📜 纪事</span><span class="tag-chip" data-type="code">⌨️ 代码</span><span class="tag-chip" data-type="review">📋 复盘</span></div><textarea id="note-content-input" placeholder="在此书写…"></textarea><input type="text" id="note-tags-input" placeholder="标签（逗号分隔）"><div class="btn-row"><button class="btn btn-outline" onclick="closeNoteEditor()">取消</button><button class="btn btn-accent" onclick="saveNote()">保存</button></div></div></div>
-    <div class="modal-overlay" id="review-modal" style="display:none;"><div class="modal"><h3>夜间复盘 <span id="review-date-label" style="font-size:12px;color:var(--text3);"></span></h3><div style="margin-bottom:12px;"><strong style="color:var(--accent);">习惯：</strong><div id="habit-check-list" style="margin:8px 0;"></div><button class="btn btn-outline" onclick="addHabitPrompt()">＋ 添加习惯</button></div><textarea id="review-content" placeholder="今日之思…"></textarea><div class="btn-row"><button class="btn btn-outline" onclick="closeReviewModal()">取消</button><button class="btn btn-accent" onclick="saveReview()">保存</button></div></div></div>
-    <div class="modal-overlay" id="setup-modal" style="display:flex;"><div class="modal"><h3>密钥</h3><p style="font-size:13px;color:var(--text2);margin-bottom:16px;">初次到访，请告知您的 Gist ID 与 Token。<br>它们仅存于您此台设备的浏览记忆中。</p><input type="text" id="setup-gist-id" placeholder="Gist ID（长串哈希）"><input type="password" id="setup-gist-token" placeholder="GitHub Token (ghp_开头)"><div class="btn-row"><button class="btn btn-accent" onclick="saveSetup()">保存并同步</button></div><p style="font-size:10px;color:var(--text3);margin-top:12px;">若暂无需同步，关闭此窗即可离线使用。</p></div></div>
+<div class="main-area">
+    <div class="top-bar"><button class="hamburger" id="hamburger-btn">☰</button><span class="page-title" id="page-title">Reverse Chronicle</span><span class="spacer"></span><button class="theme-toggle" id="theme-toggle">◑</button><button class="reminder-btn" id="reminder-btn">⏳<span id="reminder-dot" style="display:none;"></span></button><div class="reminder-dropdown" id="reminder-dropdown"><strong style="color:var(--accent);letter-spacing:1px;">⏰ 司辰提醒</strong><label><input type="radio" name="reminder-type" value="none" checked> 静谧</label><label><input type="radio" name="reminder-type" value="random-note"> 📜 随机纪事</label><label style="margin-left:20px;font-size:11px;">间隔(分): <input type="number" id="random-interval" value="30" min="5"></label><label><input type="radio" name="reminder-type" value="habit"> ✅ 习惯</label><label style="margin-left:20px;font-size:11px;">时间: <input type="time" id="habit-reminder-time" value="09:00"></label><button class="btn btn-accent" onclick="saveReminderSettings()" style="width:100%;margin-top:8px;">铭记设定</button></div></div>
 
-    <script>
+    <div class="content-area">
+        <div class="top-panels">
+            <div class="panel">
+                <div class="panel-header" id="date-panel-header">☉ 择日残片 <span class="date-label" id="selected-date-label"></span></div>
+                <div class="panel-body" id="daily-todo-list"></div>
+                <div class="add-todo-row"><input type="text" id="daily-todo-input" placeholder="添刻今日印记…"><select id="daily-todo-priority" style="max-width:60px;"><option value="low">轻</option><option value="mid" selected>中</option><option value="high">重</option></select><button class="btn btn-accent" onclick="addDailyTodo()">＋</button></div>
+                <div class="review-entry" onclick="openReviewModal()">→ 夜间复盘</div>
+                <div class="note-block"><div class="note-block-title" id="note-block-title">此日迷思</div><div id="date-related-notes"></div></div>
+            </div>
+            <div class="panel"><div class="panel-header">⌛ 待办列</div><div class="panel-body" id="todo-list"></div><div class="add-todo-row"><input type="text" id="todo-input" placeholder="新待办…"><select id="todo-priority" style="max-width:60px;"><option value="low">轻</option><option value="mid" selected>中</option><option value="high">重</option></select><button class="btn btn-accent" onclick="addTodo()">＋</button></div></div>
+        </div>
+        <div class="gantt-panel"><div class="panel-header">⟁ 甘特图<select id="gantt-view-select" onchange="loadGanttView()"><option value="">-- 选项目 --</option></select><span id="gantt-date-range" style="font-size:11px;color:var(--text3);"></span></div><div class="gantt-viewport" id="gantt-viewport"><div class="gantt-chart" id="gantt-chart"><div style="padding:40px;text-align:center;color:var(--text3);">请在侧栏「时序」创建项目</div></div></div></div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="note-modal" style="display:none;"><div class="modal"><h3 id="note-modal-title">新建纪事</h3><input type="text" id="note-title-input" placeholder="标题"><div class="tag-list" id="note-type-tags"><span class="tag-chip selected" data-type="note">📜 纪事</span><span class="tag-chip" data-type="code">⌨️ 代码</span><span class="tag-chip" data-type="review">📋 复盘</span></div><textarea id="note-content-input" placeholder="在此书写…"></textarea><input type="text" id="note-tags-input" placeholder="标签（逗号分隔）"><div class="btn-row"><button class="btn btn-outline" onclick="closeNoteEditor()">取消</button><button class="btn btn-accent" onclick="saveNote()">保存</button></div></div></div>
+<div class="modal-overlay" id="review-modal" style="display:none;"><div class="modal"><h3>夜间复盘 <span id="review-date-label" style="font-size:12px;color:var(--text3);"></span></h3><div style="margin-bottom:12px;"><strong style="color:var(--accent);">习惯律动：</strong><div id="habit-check-list" style="margin:8px 0;"></div><button class="btn btn-outline" onclick="addHabitPrompt()">＋ 添加习惯</button></div><textarea id="review-content" placeholder="今日之思…"></textarea><div class="btn-row"><button class="btn btn-outline" onclick="closeReviewModal()">取消</button><button class="btn btn-accent" onclick="saveReview()">铭记复盘</button></div></div></div>
+<div class="modal-overlay" id="setup-modal" style="display:none;"><div class="modal"><h3>司辰，请出示密钥</h3><p style="font-size:13px;color:var(--text2);margin-bottom:16px;">Gist ID 与 Token 仅存于这台设备的流溢中。<br>它们连通「箱子」深处的备份。</p><input type="text" id="setup-gist-id" placeholder="Gist ID（长串哈希）"><input type="password" id="setup-gist-token" placeholder="GitHub Token (ghp_ 开端)"><div class="btn-row"><button class="btn btn-accent" onclick="saveSetup()">同步并归拢</button></div><p style="font-size:10px;color:var(--text3);margin-top:12px;">若暂不联机，关闭此窗亦可离线书写。</p></div></div>
+
+<script>
     let GIST_ID = localStorage.getItem('pkm_gist_id') || '';
     let GIST_TOKEN = localStorage.getItem('pkm_gist_token') || '';
     const SYNC_ENABLED = true;
     const STORAGE_KEY = 'pkm_app_data_v2';
     const SETTINGS_KEY = 'pkm_app_settings_v3';
-
     function getDefaultData() { return { notes: [], todos: [], dailyTodos: {}, reviews: {}, habits: [], ganttProjects: [], activeGanttProjectId: null }; }
     function loadLocalData() { try { const raw = localStorage.getItem(STORAGE_KEY); if (raw) return Object.assign(getDefaultData(), JSON.parse(raw)); } catch(e) {} return getDefaultData(); }
     function saveLocalData(data) { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }
-    async function fetchFromGist() { if (!SYNC_ENABLED || !GIST_ID || !GIST_TOKEN) return null; try { const res = await fetch(`https://api.github.com/gists/${GIST_ID}`, { headers: { Authorization: `token ${GIST_TOKEN}` } }); if (!res.ok) throw new Error(); const gist = await res.json(); const file = gist.files['pkm_data.json']; if (file && file.content) return Object.assign(getDefaultData(), JSON.parse(file.content)); } catch(e) {} return null; }
+    async function fetchFromGist() { if (!SYNC_ENABLED || !GIST_ID || !GIST_TOKEN) return null; try { const res = await fetch(`https://api.github.com/gists/${GIST_ID}`, { headers: { Authorization: `token ${GIST_TOKEN}` } }); if (!res.ok) throw new Error(); const gist = await res.json(); const file = gist.files['pkm_data.json']; if (file && file.content) return Object.assign(getDefaultData(), JSON.parse(file.content)); } catch(e) { return null; } }
     async function pushToGist(data) { if (!SYNC_ENABLED || !GIST_ID || !GIST_TOKEN) return; try { await fetch(`https://api.github.com/gists/${GIST_ID}`, { method: 'PATCH', headers: { Authorization: `token ${GIST_TOKEN}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ files: { 'pkm_data.json': { content: JSON.stringify(data,null,2) } } }) }); } catch(e) {} }
-
+    
     let appData = loadLocalData();
     let appSettings = (()=>{ try { const raw = localStorage.getItem(SETTINGS_KEY); if (raw) return JSON.parse(raw); } catch(e) {} return { reminderType:'none', randomInterval:30, habitReminderTime:'09:00', theme:'dark' }; })();
     function saveSettings(s) { localStorage.setItem(SETTINGS_KEY, JSON.stringify(s)); }
     let currentDate = new Date().toISOString().split('T')[0];
-
+    const loadingVeil = document.getElementById('loading-veil');
+    const loadingTextSpan = document.getElementById('loading-quote-text');
+    const loadingMessages = ["拂拭尘埃，倒转时序……", "微尘归位，落笔有声。", "司辰，记忆正在苏醒。", "银芯流溢，回溯残响。", "请稍候，齿轮咬合中……"];
+    let loadingInterval;
+    function startLoadingAnim() { if(loadingInterval) clearInterval(loadingInterval); let idx = 0; loadingInterval = setInterval(()=>{ loadingTextSpan.textContent = loadingMessages[idx % loadingMessages.length]; idx++; }, 1800); }
+    function stopLoadingAndHide() { if(loadingInterval) clearInterval(loadingInterval); loadingVeil.classList.add('hide'); setTimeout(()=>{ if(loadingVeil) loadingVeil.style.display = 'none'; }, 600); }
+    
     function saveData(data) { appData = data; saveLocalData(data); pushToGist(data); refreshAllUI(); }
     const genId=()=>'id_'+Date.now()+'_'+Math.random().toString(36).substr(2,7);
     const getToday=()=>new Date().toISOString().split('T')[0];
@@ -263,40 +234,43 @@
     function showToast(msg){ const t=document.createElement('div'); t.className='toast'; t.textContent=msg; document.body.appendChild(t); setTimeout(()=>t.remove(),2500); }
     function escapeHtml(s){ const d=document.createElement('div'); d.textContent=s; return d.innerHTML; }
 
-    function applyTheme() { const html=document.documentElement, title=document.getElementById('page-title'); if (appSettings.theme==='light') { html.setAttribute('data-theme','light'); title.textContent='Hypomnema'; } else { html.removeAttribute('data-theme'); title.textContent='Reverse Chronicle'; } }
+    function applyTheme() { const html=document.documentElement; if (appSettings.theme==='light') { html.setAttribute('data-theme','light'); document.getElementById('page-title').textContent='Hypomnema'; } else { html.removeAttribute('data-theme'); document.getElementById('page-title').textContent='Reverse Chronicle'; } }
     document.getElementById('theme-toggle').addEventListener('click',()=>{ appSettings.theme=appSettings.theme==='dark'?'light':'dark'; applyTheme(); saveSettings(appSettings); });
-
-    const sidebar=document.getElementById('sidebar'), mask=document.getElementById('sidebar-mask');
-    document.getElementById('hamburger-btn').addEventListener('click',()=>{ sidebar.classList.toggle('open-mobile'); mask.classList.toggle('show'); });
-    mask.addEventListener('click',()=>{ sidebar.classList.remove('open-mobile'); mask.classList.remove('show'); });
-    document.querySelectorAll('.sidebar-tab').forEach(tab=>tab.addEventListener('click',function(){ document.querySelectorAll('.sidebar-tab').forEach(t=>t.classList.remove('active')); this.classList.add('active'); document.querySelectorAll('.sidebar-panel').forEach(p=>p.classList.remove('active')); document.getElementById(this.dataset.panel).classList.add('active'); if(this.dataset.panel==='panel-calendar') renderCalendarWidget(); if(this.dataset.panel==='panel-gantt-edit') refreshGanttEditor(); if(this.dataset.panel==='panel-notes') renderNotesList(); }));
-
+    
     function renderDatePanel() {
+        const todayStr = getToday();
+        const isToday = (currentDate === todayStr);
+        const headerSpan = document.getElementById('date-panel-header');
+        headerSpan.innerHTML = isToday ? '☉ 今日残片' : '☉ 择日残片';
+        headerSpan.appendChild(document.getElementById('selected-date-label').cloneNode(true));
         document.getElementById('selected-date-label').textContent = formatDate(currentDate);
+        const noteTitleBlock = document.getElementById('note-block-title');
+        noteTitleBlock.textContent = isToday ? '今日迷思' : '此日迷思';
+        
         const daily = appData.dailyTodos[currentDate] || [];
         const todosHtml = daily.map((t,i)=>`<div class="todo-item"><div class="todo-checkbox${t.completed?' done':''}" onclick="toggleDailyTodo(${i})">${t.completed?'✓':''}</div><span class="todo-text${t.completed?' done':''}">${escapeHtml(t.title)}</span><span class="todo-priority priority-${t.priority||'mid'}"></span><span class="todo-del" onclick="deleteDailyTodo(${i})">×</span></div>`).join('');
         document.getElementById('daily-todo-list').innerHTML = todosHtml || '<div style="padding:20px;color:var(--text3);">此日未镌刻任务</div>';
         const relatedNotes = appData.notes.filter(n => n.date === currentDate).sort((a,b)=>new Date(b.updatedAt||b.createdAt)-new Date(a.updatedAt||a.createdAt));
         const notesHtml = relatedNotes.map(n=>`<div class="note-preview-item" onclick="openNoteEditor('${n.id}')"><div class="note-preview-title">${escapeHtml(n.title||'无题')} <span class="badge" style="font-size:9px;">${n.type==='code'?'代码':n.type==='review'?'复盘':'纪事'}</span></div><div class="note-preview-meta">${(n.content||'').substring(0,60)}${(n.content||'').length>60?'…':''}</div></div>`).join('');
-        document.getElementById('date-related-notes').innerHTML = notesHtml || '<div style="color:var(--text3);padding:8px;font-size:12px;">无相关笔迹</div>';
+        document.getElementById('date-related-notes').innerHTML = notesHtml || '<div style="color:var(--text3);padding:8px;font-size:12px;">尚无笔迹落于此日</div>';
     }
-
+    
     function addDailyTodo(){ const t=document.getElementById('daily-todo-input').value.trim(); if(!t)return; if(!appData.dailyTodos[currentDate]) appData.dailyTodos[currentDate]=[]; appData.dailyTodos[currentDate].push({id:genId(),title:t,completed:false,priority:document.getElementById('daily-todo-priority').value}); document.getElementById('daily-todo-input').value=''; saveData(appData); renderDatePanel(); renderCalendarWidget(); }
     function toggleDailyTodo(i){ if(appData.dailyTodos[currentDate]?.[i]){ appData.dailyTodos[currentDate][i].completed=!appData.dailyTodos[currentDate][i].completed; saveData(appData); renderDatePanel(); } }
     function deleteDailyTodo(i){ if(appData.dailyTodos[currentDate]){ appData.dailyTodos[currentDate].splice(i,1); if(!appData.dailyTodos[currentDate].length) delete appData.dailyTodos[currentDate]; saveData(appData); renderDatePanel(); renderCalendarWidget(); } }
-
+    
     function renderTodos(){ const sorted=[...appData.todos].sort((a,b)=>{ if(a.completed!==b.completed)return a.completed?1:-1; return ({high:0,mid:1,low:2}[a.priority]||1)-({high:0,mid:1,low:2}[b.priority]||1); }); document.getElementById('todo-list').innerHTML=sorted.map(t=>`<div class="todo-item"><div class="todo-checkbox${t.completed?' done':''}" onclick="toggleTodo('${t.id}')">${t.completed?'✓':''}</div><span class="todo-text${t.completed?' done':''}">${escapeHtml(t.title)}</span><span class="todo-priority priority-${t.priority||'mid'}"></span><span class="todo-del" onclick="deleteTodo('${t.id}')">×</span></div>`).join('')||'<div style="padding:20px;color:var(--text3);">暂无待办</div>'; }
     function addTodo(){ const t=document.getElementById('todo-input').value.trim(); if(!t)return; appData.todos.push({id:genId(),title:t,completed:false,priority:document.getElementById('todo-priority').value}); document.getElementById('todo-input').value=''; saveData(appData); renderTodos(); }
     function toggleTodo(id){ const t=appData.todos.find(t=>t.id===id); if(t){t.completed=!t.completed; saveData(appData); renderTodos();} }
     function deleteTodo(id){ appData.todos=appData.todos.filter(t=>t.id!==id); saveData(appData); renderTodos(); }
-
+    
     function openReviewModal(){ document.getElementById('review-date-label').textContent=formatDate(currentDate); document.getElementById('review-content').value=(appData.reviews[currentDate]||{}).content||''; renderHabitChecks(currentDate); document.getElementById('review-modal').style.display='flex'; }
     function closeReviewModal(){ document.getElementById('review-modal').style.display='none'; }
-    function renderHabitChecks(date){ const r=appData.reviews[date]||{}; document.getElementById('habit-check-list').innerHTML=appData.habits.map(h=>`<div class="habit-check-row"><input type="checkbox" data-habit="${escapeHtml(h.name)}" ${r.habits&&r.habits[h.name]?'checked':''}><span>${escapeHtml(h.name)}</span><span style="margin-left:auto;cursor:pointer;color:#8B0000;" onclick="deleteHabit('${h.id}')">×</span></div>`).join('')||'<div>暂无习惯</div>'; }
-    function addHabitPrompt(){ const n=prompt('习惯名：'); if(n&&n.trim()){ if(appData.habits.some(h=>h.name===n.trim()))return; appData.habits.push({id:genId(),name:n.trim()}); saveData(appData); renderHabitChecks(currentDate); } }
-    function deleteHabit(id){ if(!confirm('删除习惯？'))return; appData.habits=appData.habits.filter(h=>h.id!==id); saveData(appData); renderHabitChecks(currentDate); }
+    function renderHabitChecks(date){ const r=appData.reviews[date]||{}; document.getElementById('habit-check-list').innerHTML=appData.habits.map(h=>`<div class="habit-check-row"><input type="checkbox" data-habit="${escapeHtml(h.name)}" ${r.habits&&r.habits[h.name]?'checked':''}><span>${escapeHtml(h.name)}</span><span style="margin-left:auto;cursor:pointer;color:#8B0000;" onclick="deleteHabit('${h.id}')">×</span></div>`).join('')||'<div>无可循习惯</div>'; }
+    function addHabitPrompt(){ const n=prompt('习惯之名：'); if(n&&n.trim()){ if(appData.habits.some(h=>h.name===n.trim()))return; appData.habits.push({id:genId(),name:n.trim()}); saveData(appData); renderHabitChecks(currentDate); } }
+    function deleteHabit(id){ if(!confirm('抹除习惯？'))return; appData.habits=appData.habits.filter(h=>h.id!==id); saveData(appData); renderHabitChecks(currentDate); }
     function saveReview(){ const content=document.getElementById('review-content').value, habits={}; document.querySelectorAll('#habit-check-list input').forEach(cb=>habits[cb.dataset.habit]=cb.checked); appData.reviews[currentDate]={content,habits,createdAt:new Date().toISOString()}; const full=`# 复盘 ${currentDate}\n\n## 习惯\n${Object.entries(habits).map(([k,v])=>`${v?'✅':'❌'} ${k}`).join('\n')}\n\n## 内容\n${content}`; const exist=appData.notes.find(n=>n.type==='review'&&n.date===currentDate); if(exist){ exist.content=full; exist.updatedAt=new Date().toISOString(); } else appData.notes.unshift({id:genId(),title:`复盘 ${currentDate}`,content:full,type:'review',tags:['复盘'],createdAt:new Date().toISOString(),updatedAt:new Date().toISOString(),date:currentDate}); saveData(appData); closeReviewModal(); renderDatePanel(); renderCalendarWidget(); renderNotesList(); }
-
+    
     function renderNotesList(filter=''){ let notes=appData.notes.filter(n=>!filter||(n.title||'').includes(filter)||(n.content||'').includes(filter)); notes.sort((a,b)=>new Date(b.updatedAt||b.createdAt)-new Date(a.updatedAt||a.createdAt)); const c=document.getElementById('notes-list'); if(!notes.length){ c.innerHTML='<div style="padding:32px;text-align:center;color:var(--text3);">尚无纪事</div>'; return; } c.innerHTML=notes.map(n=>`<div class="note-item" onclick="openNoteEditor('${n.id}')"><span class="note-title">${escapeHtml(n.title||'无题')}</span><span class="note-badges"><span class="badge">${n.type==='code'?'代码':n.type==='review'?'复盘':'纪事'}</span></span><span class="note-del" onclick="event.stopPropagation();deleteNote('${n.id}')">×</span></div>`).join(''); }
     let editingNoteId=null;
     function openNoteEditor(id=null){ editingNoteId=id; const m=document.getElementById('note-modal'); if(id){ const n=appData.notes.find(n=>n.id===id); if(!n)return; document.getElementById('note-modal-title').textContent='编辑纪事'; document.getElementById('note-title-input').value=n.title||''; document.getElementById('note-content-input').value=n.content||''; document.getElementById('note-tags-input').value=(n.tags||[]).join(','); document.getElementById('note-content-input').className=n.type==='code'?'code-area':''; document.querySelectorAll('#note-type-tags .tag-chip').forEach(c=>c.classList.toggle('selected',c.dataset.type===n.type)); }else{ document.getElementById('note-modal-title').textContent='新建纪事'; document.getElementById('note-title-input').value=''; document.getElementById('note-content-input').value=''; document.getElementById('note-tags-input').value=''; document.getElementById('note-content-input').className=''; document.querySelectorAll('#note-type-tags .tag-chip').forEach(c=>c.classList.toggle('selected',c.dataset.type==='note')); } m.style.display='flex'; }
@@ -307,14 +281,14 @@
     document.getElementById('note-type-tags').addEventListener('click',e=>{ if(e.target.classList.contains('tag-chip')){ document.querySelectorAll('#note-type-tags .tag-chip').forEach(c=>c.classList.remove('selected')); e.target.classList.add('selected'); document.getElementById('note-content-input').className=e.target.dataset.type==='code'?'code-area':''; } });
     document.getElementById('note-modal').addEventListener('click',e=>{ if(e.target===document.getElementById('note-modal')) closeNoteEditor(); });
     document.getElementById('review-modal').addEventListener('click',e=>{ if(e.target===document.getElementById('review-modal')) closeReviewModal(); });
-
+    
     let calYear,calMonth;
     function renderCalendarWidget(){ const n=new Date(); calYear=n.getFullYear(); calMonth=n.getMonth(); renderCalAt(calYear,calMonth); }
     function renderCalAt(y,m){ const monthNames=['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月']; const daysInMonth=new Date(y,m+1,0).getDate(); const firstDay=new Date(y,m,1).getDay(); const today=getToday(); const markedDates=new Set(); appData.notes.forEach(n=>{ const d=(n.date||n.createdAt||'').split('T')[0]; if(d)markedDates.add(d); }); Object.keys(appData.reviews).forEach(d=>markedDates.add(d)); Object.keys(appData.dailyTodos).forEach(d=>{ if(appData.dailyTodos[d]?.length)markedDates.add(d); }); let html=`<div class="cal-header"><button onclick="navigateCal(-1)">◀</button><span class="cal-month-label">${y}年 ${monthNames[m]}</span><button onclick="navigateCal(1)">▶</button></div><div class="cal-grid">`; ['日','一','二','三','四','五','六'].forEach(d=>html+=`<div class="cal-day-name">${d}</div>`); const prevM=m===0?11:m-1, prevY=m===0?y-1:y, prevDays=new Date(prevY,prevM+1,0).getDate(); for(let i=firstDay-1;i>=0;i--){ const d=prevDays-i; html+=`<div class="cal-day other-month" onclick="goToDate('${prevY}-${String(prevM+1).padStart(2,'0')}-${String(d).padStart(2,'0')}')">${d}</div>`; } for(let d=1;d<=daysInMonth;d++){ const ds=`${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`; let cls='cal-day'; if(ds===today)cls+=' today'; if(markedDates.has(ds))cls+=' has-notes'; html+=`<div class="${cls}" onclick="goToDate('${ds}')">${d}</div>`; } const total=firstDay+daysInMonth, rem=total%7===0?0:7-total%7, nextM=m===11?0:m+1, nextY=m===11?y+1:y; for(let d=1;d<=rem;d++){ html+=`<div class="cal-day other-month" onclick="goToDate('${nextY}-${String(nextM+1).padStart(2,'0')}-${String(d).padStart(2,'0')}')">${d}</div>`; } html+='</div>'; document.getElementById('cal-widget').innerHTML=html; }
     function navigateCal(d){ calMonth+=d; if(calMonth>11){calMonth=0;calYear++;} if(calMonth<0){calMonth=11;calYear--;} renderCalAt(calYear,calMonth); }
     function goToDate(ds){ currentDate=ds; renderDatePanel(); if(window.innerWidth<=900){ sidebar.classList.remove('open-mobile'); mask.classList.remove('show'); } renderCalendarWidget(); }
-
-    // Gantt 相关 (保留完整原有逻辑)
+    
+    // 甘特图函数（原样保留，高效）
     let editingTaskId=null, editingProjectId=null;
     function refreshGanttEditor(){ const sel=document.getElementById('gantt-project-select'), view=document.getElementById('gantt-view-select'); sel.innerHTML='<option value="">-- 选本 --</option>'; view.innerHTML='<option value="">-- 选项目 --</option>'; appData.ganttProjects.forEach(p=>{ sel.innerHTML+=`<option value="${p.id}">${escapeHtml(p.name)}</option>`; view.innerHTML+=`<option value="${p.id}">${escapeHtml(p.name)}</option>`; }); document.getElementById('gantt-project-list').innerHTML=appData.ganttProjects.map(p=>`<div class="gantt-project-item" onclick="selectGanttProjectById('${p.id}')"><span>${escapeHtml(p.name)}</span><span class="task-count">${p.tasks.length}任务</span><span style="color:#8B0000;" onclick="event.stopPropagation();deleteGanttProject('${p.id}')">×</span></div>`).join('')||'<div style="color:var(--text3);padding:8px;">尚无项目</div>'; if(appData.activeGanttProjectId){ sel.value=appData.activeGanttProjectId; view.value=appData.activeGanttProjectId; renderGanttTasksMini(); } renderGantt(); }
     function selectGanttProject(){ const id=document.getElementById('gantt-project-select').value; if(id){ appData.activeGanttProjectId=id; saveData(appData); refreshGanttEditor(); } }
@@ -336,21 +310,37 @@
     function onDragEnd(e){ if(!isDragging)return; finishDrag(e.clientX); document.removeEventListener('mousemove',onDragMove); document.removeEventListener('mouseup',onDragEnd); }
     function onDragEndTouch(e){ if(!isDragging)return; finishDrag(e.changedTouches[0].clientX); document.removeEventListener('touchmove',onDragMoveTouch); document.removeEventListener('touchend',onDragEndTouch); }
     function finishDrag(cx){ const dx=cx-dragStartX, bw=dragBarElement.offsetWidth; let np=dragStartProgress+Math.round((dx/bw)*100); np=Math.min(100,Math.max(0,np)); const p=appData.ganttProjects.find(p=>p.id===dragProjectId), t=p?.tasks.find(t=>t.id===dragTaskId); if(t){ t.progress=np; saveData(appData); refreshGanttEditor(); renderGantt(); } isDragging=false; dragTaskId=null; dragProjectId=null; dragBarElement=null; }
-
+    
     let reminderInterval;
     function setupReminder(){ if(reminderInterval) clearInterval(reminderInterval); if(appSettings.reminderType==='none') return; reminderInterval=setInterval(()=>{ if(appSettings.reminderType==='random-note' && appData.notes.length) showToast(`📜 ${appData.notes[Math.floor(Math.random()*appData.notes.length)].title}`); else if(appSettings.reminderType==='habit'){ const n=new Date(); const [h,m]=appSettings.habitReminderTime.split(':').map(Number); if(n.getHours()===h&&n.getMinutes()===m) showToast('习惯打卡'); } },60000); }
     function loadReminderUI(){ document.querySelectorAll('input[name="reminder-type"]').forEach(r=>{ if(r.value===appSettings.reminderType) r.checked=true; }); document.getElementById('random-interval').value=appSettings.randomInterval; document.getElementById('habit-reminder-time').value=appSettings.habitReminderTime; }
     function saveReminderSettings(){ appSettings.reminderType=document.querySelector('input[name="reminder-type"]:checked').value; appSettings.randomInterval=parseInt(document.getElementById('random-interval').value)||30; appSettings.habitReminderTime=document.getElementById('habit-reminder-time').value||'09:00'; saveSettings(appSettings); setupReminder(); document.getElementById('reminder-dropdown').classList.remove('show'); }
     document.getElementById('reminder-btn').addEventListener('click',e=>{ e.stopPropagation(); document.getElementById('reminder-dropdown').classList.toggle('show'); loadReminderUI(); });
     document.addEventListener('click',e=>{ if(!document.getElementById('reminder-dropdown').contains(e.target)) document.getElementById('reminder-dropdown').classList.remove('show'); });
-
+    
     function refreshAllUI(){ renderDatePanel(); renderTodos(); renderNotesList(); renderCalendarWidget(); refreshGanttEditor(); renderGantt(); setupReminder(); loadReminderUI(); }
     function checkSetup(){ if (!GIST_ID || !GIST_TOKEN) { document.getElementById('setup-modal').style.display='flex'; return false; } document.getElementById('setup-modal').style.display='none'; return true; }
-    function saveSetup(){ const id=document.getElementById('setup-gist-id').value.trim(), token=document.getElementById('setup-gist-token').value.trim(); if(!id||!token){alert('请完整填写');return;} localStorage.setItem('pkm_gist_id',id); localStorage.setItem('pkm_gist_token',token); GIST_ID=id; GIST_TOKEN=token; document.getElementById('setup-modal').style.display='none'; initApp(); }
+    function saveSetup(){ const id=document.getElementById('setup-gist-id').value.trim(), token=document.getElementById('setup-gist-token').value.trim(); if(!id||!token){alert('请完整填写');return;} localStorage.setItem('pkm_gist_id',id); localStorage.setItem('pkm_gist_token',token); GIST_ID=id; GIST_TOKEN=token; document.getElementById('setup-modal').style.display='none'; initApp(true); }
     document.getElementById('setup-modal').addEventListener('click',function(e){ if(e.target===this) this.style.display='none'; });
-    async function initApp(){ if(!checkSetup()){ refreshAllUI(); return; } if(SYNC_ENABLED){ const cloud=await fetchFromGist(); if(cloud){ appData=cloud; saveLocalData(appData); } } applyTheme(); refreshAllUI(); }
+    
+    const sidebarEl=document.getElementById('sidebar'), mask=document.getElementById('sidebar-mask');
+    document.getElementById('hamburger-btn').addEventListener('click',()=>{ sidebarEl.classList.toggle('open-mobile'); mask.classList.toggle('show'); });
+    mask.addEventListener('click',()=>{ sidebarEl.classList.remove('open-mobile'); mask.classList.remove('show'); });
+    document.querySelectorAll('.sidebar-tab').forEach(tab=>tab.addEventListener('click',function(){ document.querySelectorAll('.sidebar-tab').forEach(t=>t.classList.remove('active')); this.classList.add('active'); document.querySelectorAll('.sidebar-panel').forEach(p=>p.classList.remove('active')); document.getElementById(this.dataset.panel).classList.add('active'); if(this.dataset.panel==='panel-calendar') renderCalendarWidget(); if(this.dataset.panel==='panel-gantt-edit') refreshGanttEditor(); if(this.dataset.panel==='panel-notes') renderNotesList(); }));
+    
+    async function initApp(fromSave=false) {
+        startLoadingAnim();
+        loadingVeil.classList.remove('hide');
+        if(!checkSetup()) { refreshAllUI(); stopLoadingAndHide(); return; }
+        if(SYNC_ENABLED && !fromSave){
+            loadingTextSpan.textContent = "同步时空碎片……";
+            const cloud=await fetchFromGist();
+            if(cloud){ appData=cloud; saveLocalData(appData); showToast("时序归拢完毕，司辰。"); }
+        }
+        applyTheme(); refreshAllUI(); stopLoadingAndHide();
+    }
     initApp();
     setInterval(()=>saveLocalData(appData),60000);
-    </script>
+</script>
 </body>
 </html>
