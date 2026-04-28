@@ -214,11 +214,47 @@
         .note-preview-item:hover { background:var(--accent-light); padding-left:8px; }
         .toast { position:fixed; bottom:32px; right:32px; background:var(--accent); color:var(--bg); padding:12px 24px; border-radius:2px; font-size:14px; z-index:999; box-shadow:var(--shadow-lg); }
 
+        /* 移动端适配 */
         @media (max-width:900px) {
             .sidebar { position:fixed; left:0; top:0; z-index:200; width:300px; transform:translateX(-100%); height:100vh; padding-top:env(safe-area-inset-top); }
             .sidebar.open-mobile { transform:translateX(0); }
             .top-panels { flex-direction:column; }
             .gantt-label { width:100px; }
+            
+            /* 侧栏“时序”面板移动端优化 */
+            .gantt-editor-section {
+                padding: 0 4px;
+            }
+            .gantt-task-row {
+                flex-direction: column;
+                gap: 8px;
+                margin-bottom: 8px;
+            }
+            .gantt-task-row input,
+            .gantt-task-row select,
+            .gantt-task-row button {
+                width: 100%;
+                max-width: 100%;
+                font-size: 14px;
+                padding: 10px;
+            }
+            .gantt-task-row input[type="date"] {
+                min-height: 42px;
+            }
+            .gantt-project-list > div {
+                padding: 12px 8px;
+                font-size: 14px;
+            }
+            #gantt-tasks-mini-list > div {
+                padding: 12px 8px;
+                font-size: 13px;
+            }
+            .add-todo-row {
+                flex-wrap: wrap;
+            }
+            .add-todo-row input {
+                flex-basis: 100%;
+            }
         }
     </style>
 </head>
@@ -301,7 +337,7 @@
     let appSettings = (()=>{ try { const raw = localStorage.getItem(SETTINGS_KEY); if (raw) return JSON.parse(raw); } catch(e) {} return { reminderType:'none', randomInterval:30, habitReminderTime:'09:00', theme:'dark' }; })();
     function saveSettings(s) { localStorage.setItem(SETTINGS_KEY, JSON.stringify(s)); }
     let currentDate = new Date().toISOString().split('T')[0];
-    let sidebarNoteFilterDate = null; // 侧栏笔记日期过滤
+    let sidebarNoteFilterDate = null;
     
     const loadingVeil = document.getElementById('loading-veil');
     const setupModal = document.getElementById('setup-modal');
@@ -362,7 +398,7 @@
         const notesHtml = relatedNotes.map(n=>`<div class="note-preview-item" onclick="openNoteEditor('${n.id}')"><div class="note-preview-title">${escapeHtml(n.title||'无题')} <span class="badge">${n.type==='code'?'代码':n.type==='review'?'复盘':'纪事'}</span></div><div class="note-preview-meta">${(n.content||'').substring(0,60)}${(n.content||'').length>60?'…':''}</div></div>`).join('');
         document.getElementById('date-related-notes').innerHTML = notesHtml || '<div style="color:var(--text3);padding:8px;font-size:12px;">尚无笔迹落于此日</div>';
     }
-    function addDailyTodo(){ const t=document.getElementById('daily-todo-input').value.trim(); if(!t)return; if(!appData.dailyTodos[currentDate]) appData.dailyTodos[currentDate]=[]; appData.dailyTodos[currentDate].push({id:genId(),title:t,completed:false,priority:document.getElementById('daily-todo-priority').value}); document.getElementById('daily-todo-input').value=''; saveData(appData); renderDatePanel(); renderCalendarWidget(); }
+    function addDailyTodo(){ const t=document.getElementById('daily-todo-input').value.trim(); if(!t)return; if(!appData.dailyTodos[currentDate]) appData.dailyTodos[currentDate]=[]; appData.dailyTodos[currentDate].push({id:genId(),title:t,completed:false,priority:document.getElementById('daily-todo-priority').value}); document.getElementById('daily-todo-input').value=''; saveData(appData); renderDatePanel(); renderCalendarWidget(); showToast('已铭刻至今日残片'); }
     function toggleDailyTodo(i){ if(appData.dailyTodos[currentDate]?.[i]){ appData.dailyTodos[currentDate][i].completed=!appData.dailyTodos[currentDate][i].completed; saveData(appData); renderDatePanel(); } }
     function deleteDailyTodo(i){ if(appData.dailyTodos[currentDate]){ appData.dailyTodos[currentDate].splice(i,1); if(!appData.dailyTodos[currentDate].length) delete appData.dailyTodos[currentDate]; saveData(appData); renderDatePanel(); renderCalendarWidget(); } }
     function renderTodos(){ const sorted=[...appData.todos].sort((a,b)=>{ if(a.completed!==b.completed)return a.completed?1:-1; return ({high:0,mid:1,low:2}[a.priority]||1)-({high:0,mid:1,low:2}[b.priority]||1); }); document.getElementById('todo-list').innerHTML=sorted.map(t=>`<div class="todo-item"><div class="todo-checkbox${t.completed?' done':''}" onclick="toggleTodo('${t.id}')">${t.completed?'✔':''}</div><span class="todo-text${t.completed?' done':''}">${escapeHtml(t.title)}</span><span class="todo-priority priority-${t.priority||'mid'}"></span><span class="todo-del" onclick="deleteTodo('${t.id}')">✕</span></div>`).join('')||'<div style="padding:20px;color:var(--text3);">暂无待办</div>'; }
@@ -390,7 +426,6 @@
         }
         c.innerHTML = notes.map(n=>`<div class="note-item" onclick="openNoteEditor('${n.id}')"><span class="note-title">${escapeHtml(n.title||'无题')}</span><span class="note-badges"><span class="badge">${n.type==='code'?'代码':n.type==='review'?'复盘':'纪事'}</span></span><span class="note-del" onclick="event.stopPropagation();deleteNote('${n.id}')">✕</span></div>`).join('');
         
-        // 更新日期过滤标签
         const tag = document.getElementById('date-filter-tag');
         if (sidebarNoteFilterDate) {
             tag.style.display = 'inline-flex';
@@ -420,16 +455,13 @@
     function renderCalAt(y,m){ const monthNames=['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月']; const daysInMonth=new Date(y,m+1,0).getDate(); const firstDay=new Date(y,m,1).getDay(); const today=getToday(); const markedDates=new Set(); appData.notes.forEach(n=>{ const d=(n.date||n.createdAt||'').split('T')[0]; if(d)markedDates.add(d); }); Object.keys(appData.reviews).forEach(d=>markedDates.add(d)); Object.keys(appData.dailyTodos).forEach(d=>{ if(appData.dailyTodos[d]?.length)markedDates.add(d); }); let html=`<div class="cal-header"><button onclick="navigateCal(-1)">◀</button><span class="cal-month-label">${y}年 ${monthNames[m]}</span><button onclick="navigateCal(1)">▶</button></div><div class="cal-grid">`; ['日','一','二','三','四','五','六'].forEach(d=>html+=`<div class="cal-day-name">${d}</div>`); const prevM=m===0?11:m-1, prevY=m===0?y-1:y, prevDays=new Date(prevY,prevM+1,0).getDate(); for(let i=firstDay-1;i>=0;i--){ const d=prevDays-i; html+=`<div class="cal-day other-month" onclick="goToDate('${prevY}-${String(prevM+1).padStart(2,'0')}-${String(d).padStart(2,'0')}', true)">${d}</div>`; } for(let d=1;d<=daysInMonth;d++){ const ds=`${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`; let cls='cal-day'; if(ds===today)cls+=' today'; if(markedDates.has(ds))cls+=' has-notes'; html+=`<div class="${cls}" onclick="goToDate('${ds}', true)">${d}</div>`; } const total=firstDay+daysInMonth, rem=total%7===0?0:7-total%7, nextM=m===11?0:m+1, nextY=m===11?y+1:y; for(let d=1;d<=rem;d++){ html+=`<div class="cal-day other-month" onclick="goToDate('${nextY}-${String(nextM+1).padStart(2,'0')}-${String(d).padStart(2,'0')}', true)">${d}</div>`; } html+='</div>'; document.getElementById('cal-widget').innerHTML=html; }
     function navigateCal(d){ calMonth+=d; if(calMonth>11){calMonth=0;calYear++;} if(calMonth<0){calMonth=11;calYear--;} renderCalAt(calYear,calMonth); }
     
-    // 修改后的 goToDate，支持从侧栏调用并自动过滤笔记
     function goToDate(ds, fromSidebar = false){ 
         currentDate = ds; 
         renderDatePanel(); 
         
         if (fromSidebar) {
-            // 从侧栏日历点击：设置侧栏笔记过滤为该日期，并切换到纪事面板
             sidebarNoteFilterDate = ds;
             
-            // 切换侧栏tab到“纪事”
             document.querySelectorAll('.sidebar-tab').forEach(t => t.classList.remove('active'));
             const notesTab = document.querySelector('.sidebar-tab[data-panel="panel-notes"]');
             if (notesTab) notesTab.classList.add('active');
@@ -439,12 +471,10 @@
             
             renderNotesList(document.getElementById('note-search').value);
             
-            // 移动端不关闭侧栏，保持可见
             if (window.innerWidth <= 900) {
-                // 侧栏保持打开状态（不执行移除open-mobile）
+                // 保持侧栏打开
             }
         } else {
-            // 从主面板或其他地方调用：清除侧栏过滤，移动端可关闭侧栏
             sidebarNoteFilterDate = null;
             renderNotesList(document.getElementById('note-search').value);
             if (window.innerWidth <= 900) {
