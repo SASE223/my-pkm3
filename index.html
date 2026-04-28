@@ -98,7 +98,7 @@
         [data-theme="light"] input, [data-theme="light"] textarea, [data-theme="light"] select { background:rgba(255,255,255,0.7); }
         input:focus, textarea:focus, select:focus { border-color:var(--accent); box-shadow:0 0 12px rgba(201,169,97,0.2); }
         body { font-family:var(--font); background:var(--bg); color:var(--text); height:100vh; overflow:hidden; display:flex; padding-top:var(--safe-top); position:relative; }
-        /* 加载遮罩 — 重返未来风格，提升z-index确保遮挡 */
+        /* 加载遮罩 — 重返未来风格 */
         .loading-veil {
             position: fixed;
             top: 0; left: 0;
@@ -138,7 +138,6 @@
             0% { opacity: 0.4; text-shadow: 0 0 0px transparent; }
             100% { opacity: 1; text-shadow: 0 0 6px var(--accent2); }
         }
-        /* 模态框保证在加载层之上 */
         .modal-overlay {
             z-index: 3100;
         }
@@ -225,7 +224,6 @@
     const loadingVeil = document.getElementById('loading-veil');
     const loadingTextSpan = document.getElementById('loading-quote-text');
     
-    // 丰富且有区别的加载语录池
     const loadingPhrases = {
         init: ["归拢时序，拂去尘埃……", "司辰，书页正在展开。", "拾取记忆的碎屑……", "校准齿轮，重置沙漏。"],
         sync: ["正从星尘中取回残响……", "链接「箱子」深处……", "风中有银芯的味道。", "逆写时光，请稍候。"],
@@ -242,22 +240,15 @@
             loadingTextSpan.textContent = messages[idx];
         }, 1800);
     }
-    function updateLoadingPhase(phase) {
-        if(loadingInterval) {
-            let messages = loadingPhrases[phase] || loadingPhrases.init;
-            let newIdx = 0;
-            loadingTextSpan.textContent = messages[0];
-            clearInterval(loadingInterval);
-            loadingInterval = setInterval(() => {
-                let idx = (Math.floor(Date.now() / 1800) % messages.length);
-                loadingTextSpan.textContent = messages[idx];
-            }, 1800);
-        }
-    }
     function stopLoadingAndHide() {
         if(loadingInterval) clearInterval(loadingInterval);
         loadingVeil.classList.add('hide');
         setTimeout(()=>{ if(loadingVeil) loadingVeil.style.display = 'none'; }, 500);
+    }
+    function forceStopLoadingAndShowUI() {
+        if(loadingInterval) clearInterval(loadingInterval);
+        loadingVeil.classList.add('hide');
+        loadingVeil.style.display = 'none';
     }
     
     function saveData(data) { appData = data; saveLocalData(data); pushToGist(data); refreshAllUI(); }
@@ -321,7 +312,7 @@
     function navigateCal(d){ calMonth+=d; if(calMonth>11){calMonth=0;calYear++;} if(calMonth<0){calMonth=11;calYear--;} renderCalAt(calYear,calMonth); }
     function goToDate(ds){ currentDate=ds; renderDatePanel(); if(window.innerWidth<=900){ sidebar.classList.remove('open-mobile'); mask.classList.remove('show'); } renderCalendarWidget(); }
     
-    // 甘特图函数（保留完整逻辑，无改动）
+    // 甘特图核心逻辑（保持完整）
     let editingTaskId=null, editingProjectId=null;
     function refreshGanttEditor(){ const sel=document.getElementById('gantt-project-select'), view=document.getElementById('gantt-view-select'); sel.innerHTML='<option value="">-- 选本 --</option>'; view.innerHTML='<option value="">-- 选项目 --</option>'; appData.ganttProjects.forEach(p=>{ sel.innerHTML+=`<option value="${p.id}">${escapeHtml(p.name)}</option>`; view.innerHTML+=`<option value="${p.id}">${escapeHtml(p.name)}</option>`; }); document.getElementById('gantt-project-list').innerHTML=appData.ganttProjects.map(p=>`<div class="gantt-project-item" onclick="selectGanttProjectById('${p.id}')"><span>${escapeHtml(p.name)}</span><span class="task-count">${p.tasks.length}任务</span><span style="color:#8B0000;" onclick="event.stopPropagation();deleteGanttProject('${p.id}')">×</span></div>`).join('')||'<div style="color:var(--text3);padding:8px;">尚无项目</div>'; if(appData.activeGanttProjectId){ sel.value=appData.activeGanttProjectId; view.value=appData.activeGanttProjectId; renderGanttTasksMini(); } renderGantt(); }
     function selectGanttProject(){ const id=document.getElementById('gantt-project-select').value; if(id){ appData.activeGanttProjectId=id; saveData(appData); refreshGanttEditor(); } }
@@ -352,8 +343,17 @@
     document.addEventListener('click',e=>{ if(!document.getElementById('reminder-dropdown').contains(e.target)) document.getElementById('reminder-dropdown').classList.remove('show'); });
     
     function refreshAllUI(){ renderDatePanel(); renderTodos(); renderNotesList(); renderCalendarWidget(); refreshGanttEditor(); renderGantt(); setupReminder(); loadReminderUI(); }
-    function checkSetup(){ if (!GIST_ID || !GIST_TOKEN) { document.getElementById('setup-modal').style.display='flex'; return false; } document.getElementById('setup-modal').style.display='none'; return true; }
-    function saveSetup(){ const id=document.getElementById('setup-gist-id').value.trim(), token=document.getElementById('setup-gist-token').value.trim(); if(!id||!token){alert('请完整填写');return;} localStorage.setItem('pkm_gist_id',id); localStorage.setItem('pkm_gist_token',token); GIST_ID=id; GIST_TOKEN=token; document.getElementById('setup-modal').style.display='none'; initApp(true); }
+    function checkSetup(){ if (!GIST_ID || !GIST_TOKEN) { 
+        document.getElementById('setup-modal').style.display='flex'; 
+        return false; 
+    } 
+    document.getElementById('setup-modal').style.display='none'; 
+    return true; }
+    function saveSetup(){ const id=document.getElementById('setup-gist-id').value.trim(), token=document.getElementById('setup-gist-token').value.trim(); if(!id||!token){alert('请完整填写');return;} localStorage.setItem('pkm_gist_id',id); localStorage.setItem('pkm_gist_token',token); GIST_ID=id; GIST_TOKEN=token; document.getElementById('setup-modal').style.display='none'; 
+        // 重新完整初始化，不再弹出模态框
+        forceStopLoadingAndShowUI();
+        initApp(true);
+    }
     document.getElementById('setup-modal').addEventListener('click',function(e){ if(e.target===this) this.style.display='none'; });
     
     const sidebarEl=document.getElementById('sidebar'), mask=document.getElementById('sidebar-mask');
@@ -362,20 +362,18 @@
     document.querySelectorAll('.sidebar-tab').forEach(tab=>tab.addEventListener('click',function(){ document.querySelectorAll('.sidebar-tab').forEach(t=>t.classList.remove('active')); this.classList.add('active'); document.querySelectorAll('.sidebar-panel').forEach(p=>p.classList.remove('active')); document.getElementById(this.dataset.panel).classList.add('active'); if(this.dataset.panel==='panel-calendar') renderCalendarWidget(); if(this.dataset.panel==='panel-gantt-edit') refreshGanttEditor(); if(this.dataset.panel==='panel-notes') renderNotesList(); }));
     
     async function initApp(fromSave=false) {
+        // 确保启动时加载层可见但不会阻塞setup弹窗
         loadingVeil.style.display = 'flex';
         loadingVeil.classList.remove('hide');
         if(!checkSetup()) {
-            // 无配置：显示模态框，且离线加载数据
-            startLoadingAnim('offline');
-            // 短暂延迟确保渲染
-            await new Promise(r => setTimeout(r, 200));
-            stopLoadingAndHide();
+            // 没有密钥：立即隐藏加载层，显示模态框
+            forceStopLoadingAndShowUI();
+            // 但确保主体已渲染一次离线模式
             refreshAllUI();
             return;
         }
         if(SYNC_ENABLED && !fromSave){
             startLoadingAnim('sync');
-            updateLoadingPhase('sync');
             const cloud = await fetchFromGist();
             if(cloud){
                 appData = cloud;
