@@ -98,20 +98,20 @@
         [data-theme="light"] input, [data-theme="light"] textarea, [data-theme="light"] select { background:rgba(255,255,255,0.7); }
         input:focus, textarea:focus, select:focus { border-color:var(--accent); box-shadow:0 0 12px rgba(201,169,97,0.2); }
         body { font-family:var(--font); background:var(--bg); color:var(--text); height:100vh; overflow:hidden; display:flex; padding-top:var(--safe-top); position:relative; }
-        /* loading 遮罩 — 重返未来风格 */
+        /* 加载遮罩 — 重返未来风格，提升z-index确保遮挡 */
         .loading-veil {
             position: fixed;
             top: 0; left: 0;
             width: 100%; height: 100%;
             background: var(--bg);
             backdrop-filter: blur(12px);
-            z-index: 1000;
+            z-index: 3000;
             display: flex;
             align-items: center;
             justify-content: center;
             flex-direction: column;
             gap: 24px;
-            transition: opacity 0.6s ease;
+            transition: opacity 0.5s ease;
             font-family: var(--font);
             letter-spacing: 2px;
         }
@@ -121,7 +121,7 @@
             pointer-events: none;
         }
         .loading-veil .hourglass-symbol {
-            font-size: 48px;
+            font-size: 52px;
             color: var(--accent);
             animation: slowPulse 2s infinite;
         }
@@ -131,19 +131,21 @@
             border-left: 2px solid var(--accent);
             padding-left: 16px;
             font-style: italic;
+            max-width: 280px;
+            text-align: left;
         }
         @keyframes slowPulse {
             0% { opacity: 0.4; text-shadow: 0 0 0px transparent; }
             100% { opacity: 1; text-shadow: 0 0 6px var(--accent2); }
         }
-        /* 侧边栏、主区域样式继承原有并优化 */
-        .sidebar { background: var(--surface); backdrop-filter: var(--frosted-glass); border-right:1px solid var(--border); box-shadow:var(--shadow); }
-        .panel, .gantt-panel { background: var(--surface); backdrop-filter: var(--frosted-glass); border:1px solid var(--border); }
-        .note-item, .gantt-project-item { background: var(--surface2); }
-        .tag-chip { background: var(--tag-bg); color: var(--tag-text); }
+        /* 模态框保证在加载层之上 */
+        .modal-overlay {
+            z-index: 3100;
+        }
+        #setup-modal {
+            z-index: 3200;
+        }
         .sidebar, .main-area { position: relative; z-index: 1; }
-        
-        /* 其余样式保持原有精简，仅微调标题质感 */
         .panel-header { letter-spacing: 2px; font-weight: 400; text-transform: uppercase; }
         .note-block-title { font-size: 12px; letter-spacing: 1px; color: var(--accent); border-bottom: 1px dashed var(--border); display: inline-block; margin-bottom: 12px; }
         .review-entry { background: linear-gradient(135deg, var(--accent-light), transparent); }
@@ -222,10 +224,41 @@
     let currentDate = new Date().toISOString().split('T')[0];
     const loadingVeil = document.getElementById('loading-veil');
     const loadingTextSpan = document.getElementById('loading-quote-text');
-    const loadingMessages = ["拂拭尘埃，倒转时序……", "微尘归位，落笔有声。", "司辰，记忆正在苏醒。", "银芯流溢，回溯残响。", "请稍候，齿轮咬合中……"];
-    let loadingInterval;
-    function startLoadingAnim() { if(loadingInterval) clearInterval(loadingInterval); let idx = 0; loadingInterval = setInterval(()=>{ loadingTextSpan.textContent = loadingMessages[idx % loadingMessages.length]; idx++; }, 1800); }
-    function stopLoadingAndHide() { if(loadingInterval) clearInterval(loadingInterval); loadingVeil.classList.add('hide'); setTimeout(()=>{ if(loadingVeil) loadingVeil.style.display = 'none'; }, 600); }
+    
+    // 丰富且有区别的加载语录池
+    const loadingPhrases = {
+        init: ["归拢时序，拂去尘埃……", "司辰，书页正在展开。", "拾取记忆的碎屑……", "校准齿轮，重置沙漏。"],
+        sync: ["正从星尘中取回残响……", "链接「箱子」深处……", "风中有银芯的味道。", "逆写时光，请稍候。"],
+        offline: ["烛火已燃，离线书写。", "无需外界，手记自存。", "孤页亦可成卷。", "独行于时序回廊。"]
+    };
+    let loadingInterval = null;
+    function startLoadingAnim(phase = 'init') {
+        if(loadingInterval) clearInterval(loadingInterval);
+        let messages = loadingPhrases[phase] || loadingPhrases.init;
+        let idx = 0;
+        loadingTextSpan.textContent = messages[0];
+        loadingInterval = setInterval(() => {
+            idx = (idx + 1) % messages.length;
+            loadingTextSpan.textContent = messages[idx];
+        }, 1800);
+    }
+    function updateLoadingPhase(phase) {
+        if(loadingInterval) {
+            let messages = loadingPhrases[phase] || loadingPhrases.init;
+            let newIdx = 0;
+            loadingTextSpan.textContent = messages[0];
+            clearInterval(loadingInterval);
+            loadingInterval = setInterval(() => {
+                let idx = (Math.floor(Date.now() / 1800) % messages.length);
+                loadingTextSpan.textContent = messages[idx];
+            }, 1800);
+        }
+    }
+    function stopLoadingAndHide() {
+        if(loadingInterval) clearInterval(loadingInterval);
+        loadingVeil.classList.add('hide');
+        setTimeout(()=>{ if(loadingVeil) loadingVeil.style.display = 'none'; }, 500);
+    }
     
     function saveData(data) { appData = data; saveLocalData(data); pushToGist(data); refreshAllUI(); }
     const genId=()=>'id_'+Date.now()+'_'+Math.random().toString(36).substr(2,7);
@@ -288,7 +321,7 @@
     function navigateCal(d){ calMonth+=d; if(calMonth>11){calMonth=0;calYear++;} if(calMonth<0){calMonth=11;calYear--;} renderCalAt(calYear,calMonth); }
     function goToDate(ds){ currentDate=ds; renderDatePanel(); if(window.innerWidth<=900){ sidebar.classList.remove('open-mobile'); mask.classList.remove('show'); } renderCalendarWidget(); }
     
-    // 甘特图函数（原样保留，高效）
+    // 甘特图函数（保留完整逻辑，无改动）
     let editingTaskId=null, editingProjectId=null;
     function refreshGanttEditor(){ const sel=document.getElementById('gantt-project-select'), view=document.getElementById('gantt-view-select'); sel.innerHTML='<option value="">-- 选本 --</option>'; view.innerHTML='<option value="">-- 选项目 --</option>'; appData.ganttProjects.forEach(p=>{ sel.innerHTML+=`<option value="${p.id}">${escapeHtml(p.name)}</option>`; view.innerHTML+=`<option value="${p.id}">${escapeHtml(p.name)}</option>`; }); document.getElementById('gantt-project-list').innerHTML=appData.ganttProjects.map(p=>`<div class="gantt-project-item" onclick="selectGanttProjectById('${p.id}')"><span>${escapeHtml(p.name)}</span><span class="task-count">${p.tasks.length}任务</span><span style="color:#8B0000;" onclick="event.stopPropagation();deleteGanttProject('${p.id}')">×</span></div>`).join('')||'<div style="color:var(--text3);padding:8px;">尚无项目</div>'; if(appData.activeGanttProjectId){ sel.value=appData.activeGanttProjectId; view.value=appData.activeGanttProjectId; renderGanttTasksMini(); } renderGantt(); }
     function selectGanttProject(){ const id=document.getElementById('gantt-project-select').value; if(id){ appData.activeGanttProjectId=id; saveData(appData); refreshGanttEditor(); } }
@@ -329,15 +362,34 @@
     document.querySelectorAll('.sidebar-tab').forEach(tab=>tab.addEventListener('click',function(){ document.querySelectorAll('.sidebar-tab').forEach(t=>t.classList.remove('active')); this.classList.add('active'); document.querySelectorAll('.sidebar-panel').forEach(p=>p.classList.remove('active')); document.getElementById(this.dataset.panel).classList.add('active'); if(this.dataset.panel==='panel-calendar') renderCalendarWidget(); if(this.dataset.panel==='panel-gantt-edit') refreshGanttEditor(); if(this.dataset.panel==='panel-notes') renderNotesList(); }));
     
     async function initApp(fromSave=false) {
-        startLoadingAnim();
+        loadingVeil.style.display = 'flex';
         loadingVeil.classList.remove('hide');
-        if(!checkSetup()) { refreshAllUI(); stopLoadingAndHide(); return; }
-        if(SYNC_ENABLED && !fromSave){
-            loadingTextSpan.textContent = "同步时空碎片……";
-            const cloud=await fetchFromGist();
-            if(cloud){ appData=cloud; saveLocalData(appData); showToast("时序归拢完毕，司辰。"); }
+        if(!checkSetup()) {
+            // 无配置：显示模态框，且离线加载数据
+            startLoadingAnim('offline');
+            // 短暂延迟确保渲染
+            await new Promise(r => setTimeout(r, 200));
+            stopLoadingAndHide();
+            refreshAllUI();
+            return;
         }
-        applyTheme(); refreshAllUI(); stopLoadingAndHide();
+        if(SYNC_ENABLED && !fromSave){
+            startLoadingAnim('sync');
+            updateLoadingPhase('sync');
+            const cloud = await fetchFromGist();
+            if(cloud){
+                appData = cloud;
+                saveLocalData(appData);
+                showToast("时序归拢完毕，司辰。");
+            } else {
+                showToast("离线模式，本地手记犹存。");
+            }
+        } else {
+            startLoadingAnim('init');
+        }
+        applyTheme();
+        refreshAllUI();
+        stopLoadingAndHide();
     }
     initApp();
     setInterval(()=>saveLocalData(appData),60000);
