@@ -217,7 +217,10 @@
         @media (max-width:900px) {
             .sidebar { position:fixed; left:0; top:0; z-index:200; width:300px; transform:translateX(-100%); height:100vh; padding-top:env(safe-area-inset-top); }
             .sidebar.open-mobile { transform:translateX(0); }
-            .top-panels { flex-direction:column; }
+            .content-area { padding:12px; }
+            .top-panels { flex-direction:column; min-height: auto; }
+            .panel { flex: none; min-height: 380px; margin-bottom: 16px; }
+            .panel-body { max-height: 200px; }
             .gantt-label { width:100px; }
             
             /* 移动端时序面板优化 */
