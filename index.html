@@ -214,47 +214,21 @@
         .note-preview-item:hover { background:var(--accent-light); padding-left:8px; }
         .toast { position:fixed; bottom:32px; right:32px; background:var(--accent); color:var(--bg); padding:12px 24px; border-radius:2px; font-size:14px; z-index:999; box-shadow:var(--shadow-lg); }
 
-        /* 移动端适配 */
         @media (max-width:900px) {
             .sidebar { position:fixed; left:0; top:0; z-index:200; width:300px; transform:translateX(-100%); height:100vh; padding-top:env(safe-area-inset-top); }
             .sidebar.open-mobile { transform:translateX(0); }
             .top-panels { flex-direction:column; }
             .gantt-label { width:100px; }
             
-            /* 侧栏“时序”面板移动端优化 */
-            .gantt-editor-section {
-                padding: 0 4px;
-            }
-            .gantt-task-row {
-                flex-direction: column;
-                gap: 8px;
-                margin-bottom: 8px;
-            }
-            .gantt-task-row input,
-            .gantt-task-row select,
-            .gantt-task-row button {
-                width: 100%;
-                max-width: 100%;
-                font-size: 14px;
-                padding: 10px;
-            }
-            .gantt-task-row input[type="date"] {
-                min-height: 42px;
-            }
-            .gantt-project-list > div {
-                padding: 12px 8px;
-                font-size: 14px;
-            }
-            #gantt-tasks-mini-list > div {
-                padding: 12px 8px;
-                font-size: 13px;
-            }
-            .add-todo-row {
-                flex-wrap: wrap;
-            }
-            .add-todo-row input {
-                flex-basis: 100%;
-            }
+            /* 移动端时序面板优化 */
+            .gantt-editor-section { display:flex; flex-direction:column; gap:12px; }
+            .gantt-editor-section select, 
+            .gantt-editor-section input, 
+            .gantt-editor-section button { width:100%; margin-bottom:8px; }
+            .gantt-task-row { flex-direction:column; gap:8px; }
+            .gantt-task-row input[type="date"] { width:100%; }
+            .gantt-task-row .btn { width:100%; margin-bottom:4px; }
+            .gantt-project-list { max-height:150px; }
         }
     </style>
 </head>
@@ -284,7 +258,36 @@
         <div style="font-size:11px;color:var(--text3);padding:8px;text-align:center;">点击一日，窥见那天的残片</div>
     </div>
     <div class="sidebar-panel" id="panel-gantt-edit">
-        <div class="gantt-editor-section"><h4>时序 · 项目</h4><select id="gantt-project-select" onchange="selectGanttProject()"><option value="">-- 选本 --</option></select><div class="gantt-task-row"><input type="text" id="new-project-name" placeholder="新项目名称"><button class="btn btn-accent" onclick="createGanttProject()">创</button></div><div class="gantt-project-list" id="gantt-project-list"></div><hr><h4>编纂任务</h4><div class="gantt-task-row"><input type="text" id="new-task-name" placeholder="任务名"></div><div class="gantt-task-row"><input type="date" id="new-task-start"><input type="date" id="new-task-end"></div><div class="gantt-task-row"><input type="number" id="new-task-progress" placeholder="进度%" min="0" max="100" value="0" style="max-width:70px;"><select id="new-task-color"><option value="#C9A961">琥珀金</option><option value="#4A5D6F">烟蓝</option><option value="#8B0000">血</option><option value="#5b7a6a">苔绿</option></select><button class="btn btn-accent" id="task-save-btn" onclick="addTaskToProject()">添加</button><button class="btn btn-outline" id="task-cancel-btn" onclick="cancelEditTask()" style="display:none;">取消</button></div><div id="gantt-tasks-mini-list"></div></div>
+        <div class="gantt-editor-section">
+            <h4>时序 · 项目</h4>
+            <select id="gantt-project-select" onchange="selectGanttProject()"><option value="">-- 选本 --</option></select>
+            <div class="gantt-task-row" style="display:flex; gap:6px;">
+                <input type="text" id="new-project-name" placeholder="新项目名称">
+                <button class="btn btn-accent" onclick="createGanttProject()">创</button>
+            </div>
+            <div class="gantt-project-list" id="gantt-project-list"></div>
+            <hr>
+            <h4>编纂任务</h4>
+            <div class="gantt-task-row" style="margin-bottom:6px;">
+                <input type="text" id="new-task-name" placeholder="任务名">
+            </div>
+            <div class="gantt-task-row" style="display:flex; gap:6px; margin-bottom:6px;">
+                <input type="date" id="new-task-start">
+                <input type="date" id="new-task-end">
+            </div>
+            <div class="gantt-task-row" style="display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
+                <input type="number" id="new-task-progress" placeholder="进度%" min="0" max="100" value="0" style="max-width:70px;">
+                <select id="new-task-color">
+                    <option value="#C9A961">琥珀金</option>
+                    <option value="#4A5D6F">烟蓝</option>
+                    <option value="#8B0000">血</option>
+                    <option value="#5b7a6a">苔绿</option>
+                </select>
+                <button class="btn btn-accent" id="task-save-btn" onclick="addTaskToProject()">添加</button>
+                <button class="btn btn-outline" id="task-cancel-btn" onclick="cancelEditTask()" style="display:none;">取消</button>
+            </div>
+            <div id="gantt-tasks-mini-list"></div>
+        </div>
     </div>
 </aside>
 
@@ -294,7 +297,7 @@
     <div class="content-area">
         <div class="top-panels">
             <div class="panel">
-                <div class="panel-header" id="date-panel-header"><span id="date-title-text">☉ 择日残片</span> <span id="selected-date-label"></span></div>
+                <div class="panel-header" id="date-panel-header"><span id="date-title-text">☉ 今日残片</span> <span id="selected-date-label"></span></div>
                 <div class="panel-body" id="daily-todo-list"></div>
                 <div class="add-todo-row"><input type="text" id="daily-todo-input" placeholder="添刻今日印记…"><select id="daily-todo-priority" style="max-width:60px;"><option value="low">轻</option><option value="mid" selected>中</option><option value="high">重</option></select><button class="btn btn-accent" onclick="addDailyTodo()">＋</button></div>
                 <div class="review-entry" onclick="openReviewModal()">→ 夜间复盘</div>
@@ -398,11 +401,44 @@
         const notesHtml = relatedNotes.map(n=>`<div class="note-preview-item" onclick="openNoteEditor('${n.id}')"><div class="note-preview-title">${escapeHtml(n.title||'无题')} <span class="badge">${n.type==='code'?'代码':n.type==='review'?'复盘':'纪事'}</span></div><div class="note-preview-meta">${(n.content||'').substring(0,60)}${(n.content||'').length>60?'…':''}</div></div>`).join('');
         document.getElementById('date-related-notes').innerHTML = notesHtml || '<div style="color:var(--text3);padding:8px;font-size:12px;">尚无笔迹落于此日</div>';
     }
-    function addDailyTodo(){ const t=document.getElementById('daily-todo-input').value.trim(); if(!t)return; if(!appData.dailyTodos[currentDate]) appData.dailyTodos[currentDate]=[]; appData.dailyTodos[currentDate].push({id:genId(),title:t,completed:false,priority:document.getElementById('daily-todo-priority').value}); document.getElementById('daily-todo-input').value=''; saveData(appData); renderDatePanel(); renderCalendarWidget(); showToast('已铭刻至今日残片'); }
-    function toggleDailyTodo(i){ if(appData.dailyTodos[currentDate]?.[i]){ appData.dailyTodos[currentDate][i].completed=!appData.dailyTodos[currentDate][i].completed; saveData(appData); renderDatePanel(); } }
-    function deleteDailyTodo(i){ if(appData.dailyTodos[currentDate]){ appData.dailyTodos[currentDate].splice(i,1); if(!appData.dailyTodos[currentDate].length) delete appData.dailyTodos[currentDate]; saveData(appData); renderDatePanel(); renderCalendarWidget(); } }
-    function renderTodos(){ const sorted=[...appData.todos].sort((a,b)=>{ if(a.completed!==b.completed)return a.completed?1:-1; return ({high:0,mid:1,low:2}[a.priority]||1)-({high:0,mid:1,low:2}[b.priority]||1); }); document.getElementById('todo-list').innerHTML=sorted.map(t=>`<div class="todo-item"><div class="todo-checkbox${t.completed?' done':''}" onclick="toggleTodo('${t.id}')">${t.completed?'✔':''}</div><span class="todo-text${t.completed?' done':''}">${escapeHtml(t.title)}</span><span class="todo-priority priority-${t.priority||'mid'}"></span><span class="todo-del" onclick="deleteTodo('${t.id}')">✕</span></div>`).join('')||'<div style="padding:20px;color:var(--text3);">暂无待办</div>'; }
-    function addTodo(){ const t=document.getElementById('todo-input').value.trim(); if(!t)return; appData.todos.push({id:genId(),title:t,completed:false,priority:document.getElementById('todo-priority').value}); document.getElementById('todo-input').value=''; saveData(appData); renderTodos(); }
+    function addDailyTodo(){ 
+        const t=document.getElementById('daily-todo-input').value.trim(); 
+        if(!t) return; 
+        if(!appData.dailyTodos[currentDate]) appData.dailyTodos[currentDate]=[]; 
+        appData.dailyTodos[currentDate].push({id:genId(),title:t,completed:false,priority:document.getElementById('daily-todo-priority').value}); 
+        document.getElementById('daily-todo-input').value=''; 
+        saveData(appData); 
+        renderDatePanel(); 
+        renderCalendarWidget(); 
+    }
+    function toggleDailyTodo(i){ 
+        if(appData.dailyTodos[currentDate]?.[i]){ 
+            appData.dailyTodos[currentDate][i].completed=!appData.dailyTodos[currentDate][i].completed; 
+            saveData(appData); 
+            renderDatePanel(); 
+        } 
+    }
+    function deleteDailyTodo(i){ 
+        if(appData.dailyTodos[currentDate]){ 
+            appData.dailyTodos[currentDate].splice(i,1); 
+            if(!appData.dailyTodos[currentDate].length) delete appData.dailyTodos[currentDate]; 
+            saveData(appData); 
+            renderDatePanel(); 
+            renderCalendarWidget(); 
+        } 
+    }
+    function renderTodos(){ 
+        const sorted=[...appData.todos].sort((a,b)=>{ if(a.completed!==b.completed)return a.completed?1:-1; return ({high:0,mid:1,low:2}[a.priority]||1)-({high:0,mid:1,low:2}[b.priority]||1); }); 
+        document.getElementById('todo-list').innerHTML=sorted.map(t=>`<div class="todo-item"><div class="todo-checkbox${t.completed?' done':''}" onclick="toggleTodo('${t.id}')">${t.completed?'✔':''}</div><span class="todo-text${t.completed?' done':''}">${escapeHtml(t.title)}</span><span class="todo-priority priority-${t.priority||'mid'}"></span><span class="todo-del" onclick="deleteTodo('${t.id}')">✕</span></div>`).join('')||'<div style="padding:20px;color:var(--text3);">暂无待办</div>'; 
+    }
+    function addTodo(){ 
+        const t=document.getElementById('todo-input').value.trim(); 
+        if(!t) return; 
+        appData.todos.push({id:genId(),title:t,completed:false,priority:document.getElementById('todo-priority').value}); 
+        document.getElementById('todo-input').value=''; 
+        saveData(appData); 
+        renderTodos(); 
+    }
     function toggleTodo(id){ const t=appData.todos.find(t=>t.id===id); if(t){t.completed=!t.completed; saveData(appData); renderTodos();} }
     function deleteTodo(id){ appData.todos=appData.todos.filter(t=>t.id!==id); saveData(appData); renderTodos(); }
     
@@ -461,19 +497,13 @@
         
         if (fromSidebar) {
             sidebarNoteFilterDate = ds;
-            
             document.querySelectorAll('.sidebar-tab').forEach(t => t.classList.remove('active'));
             const notesTab = document.querySelector('.sidebar-tab[data-panel="panel-notes"]');
             if (notesTab) notesTab.classList.add('active');
             document.querySelectorAll('.sidebar-panel').forEach(p => p.classList.remove('active'));
             const notesPanel = document.getElementById('panel-notes');
             if (notesPanel) notesPanel.classList.add('active');
-            
             renderNotesList(document.getElementById('note-search').value);
-            
-            if (window.innerWidth <= 900) {
-                // 保持侧栏打开
-            }
         } else {
             sidebarNoteFilterDate = null;
             renderNotesList(document.getElementById('note-search').value);
@@ -482,7 +512,6 @@
                 document.getElementById('sidebar-mask').classList.remove('show');
             }
         }
-        
         renderCalendarWidget(); 
     }
     
