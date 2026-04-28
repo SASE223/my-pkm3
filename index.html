@@ -78,7 +78,7 @@
         .cal-month-label { font-weight:500; font-size:16px; color:var(--accent); letter-spacing:2px; }
         .cal-grid { display:grid; grid-template-columns:repeat(7, 1fr); gap:4px; text-align:center; font-size:12px; }
         .cal-day-name { color:var(--text3); padding:6px 0; font-weight:400; font-size:10px; }
-        .cal-day { position: relative; padding:10px 4px; cursor:pointer; border-radius:var(--radius-xs); color:var(--text2); min-width:32px; min-height:32px; display:flex; align-items:center; justify-content:center; transition:var(--transition); border:1px solid transparent; }
+        .cal-day { position:relative; padding:10px 4px; cursor:pointer; border-radius:var(--radius-xs); color:var(--text2); min-width:32px; min-height:32px; display:flex; align-items:center; justify-content:center; transition:var(--transition); border:1px solid transparent; }
         .cal-day:hover { border-color:var(--accent); color:var(--accent); }
         .cal-day.today { background:var(--accent); color:#0f0c0a; font-weight:600; }
         .cal-day.has-notes::after { content:''; position:absolute; bottom:4px; left:50%; transform:translateX(-50%); width:4px; height:4px; border-radius:50%; background:var(--accent2); }
@@ -197,7 +197,6 @@
 </head>
 <body>
     <div class="sidebar-mask" id="sidebar-mask"></div>
-
     <aside class="sidebar" id="sidebar">
         <div class="sidebar-tabs">
             <div class="sidebar-tab active" data-panel="panel-notes">纪事</div>
@@ -213,7 +212,7 @@
         </div>
         <div class="sidebar-panel" id="panel-calendar">
             <div class="cal-widget" id="cal-widget"></div>
-            <div style="font-size:11px;color:var(--text3);padding:8px;text-align:center;">点击一日，查看残片</div>
+            <div style="font-size:11px;color:var(--text3);padding:8px;text-align:center;">点击一日，查看残片与日程</div>
         </div>
         <div class="sidebar-panel" id="panel-gantt-edit">
             <div class="gantt-editor-section">
@@ -264,9 +263,12 @@
         <div class="content-area">
             <div class="top-panels">
                 <div class="panel">
-                    <div class="panel-header">☉ 今日残片 <span class="date-label" id="today-label"></span></div>
+                    <div class="panel-header">
+                        <span>☉ 今日残片</span>
+                        <span class="date-label" id="today-label"></span>
+                    </div>
                     <div class="panel-body" id="daily-todo-list"></div>
-                    <div class="add-todo-row">
+                    <div class="add-todo-row" id="daily-add-row">
                         <input type="text" id="daily-todo-input" placeholder="添加今日…">
                         <select id="daily-todo-priority" style="max-width:60px;"><option value="low">轻</option><option value="mid" selected>中</option><option value="high">重</option></select>
                         <button class="btn btn-accent" onclick="addDailyTodo()">＋</button>
@@ -386,6 +388,8 @@
 
     let appData = loadLocalData();
     let appSettings = loadSettings();
+    // 新增：当前查看日期，用于主面板日程显示
+    let currentViewDate = getToday();
 
     function saveData(data) { appData = data; saveLocalData(data); pushToGist(data); }
 
@@ -533,16 +537,55 @@
         html+='</div>'; document.getElementById('cal-widget').innerHTML=html;
     }
     function navigateCal(d){ calMonth+=d; if(calMonth>11){calMonth=0;calYear++;} if(calMonth<0){calMonth=11;calYear--;} renderCalAt(calYear,calMonth); }
-    function goToDate(ds){ document.querySelector('.sidebar-tab[data-panel="panel-notes"]').click(); document.getElementById('note-search').value=ds; renderNotesList(ds); }
-
-    function renderDailyTodos(){
-        const today=getToday(), todos=appData.dailyTodos[today]||[];
-        document.getElementById('today-label').textContent=formatDate(today);
-        document.getElementById('daily-todo-list').innerHTML=todos.map((t,i)=>`<div class="todo-item"><div class="todo-checkbox${t.completed?' done':''}" onclick="toggleDailyTodo(${i})">${t.completed?'✓':''}</div><span class="todo-text${t.completed?' done':''}">${escapeHtml(t.title)}</span><span class="todo-priority priority-${t.priority||'mid'}"></span><span class="todo-del" onclick="deleteDailyTodo(${i})">×</span></div>`).join('')||'<div style="padding:20px;color:var(--text3);">今日尚未镌刻</div>';
+    function goToDate(ds){
+        // 设置当前查看日期，并刷新主面板日程
+        currentViewDate = ds;
+        renderDailyTodos();
+        // 切换到笔记面板并搜索该日期
+        document.querySelector('.sidebar-tab[data-panel="panel-notes"]').click();
+        document.getElementById('note-search').value = ds;
+        renderNotesList(ds);
+        // 移动端打开侧栏（可选）
+        if(window.innerWidth<=900){ sidebar.classList.add('open-mobile'); mask.classList.add('show'); }
     }
-    function addDailyTodo(){ const t=document.getElementById('daily-todo-input').value.trim(); if(!t)return; const today=getToday(); if(!appData.dailyTodos[today])appData.dailyTodos[today]=[]; appData.dailyTodos[today].push({id:genId(),title:t,completed:false,priority:document.getElementById('daily-todo-priority').value}); document.getElementById('daily-todo-input').value=''; saveData(appData); renderDailyTodos(); renderCalendarWidget(); }
-    function toggleDailyTodo(i){ const t=getToday(); if(appData.dailyTodos[t]?.[i]){ appData.dailyTodos[t][i].completed=!appData.dailyTodos[t][i].completed; saveData(appData); renderDailyTodos(); } }
-    function deleteDailyTodo(i){ const t=getToday(); if(appData.dailyTodos[t]){ appData.dailyTodos[t].splice(i,1); if(!appData.dailyTodos[t].length) delete appData.dailyTodos[t]; saveData(appData); renderDailyTodos(); renderCalendarWidget(); } }
+
+    // 修改每日待办相关函数，使用 currentViewDate 替代 getToday()
+    function renderDailyTodos(){
+        const todos = appData.dailyTodos[currentViewDate] || [];
+        document.getElementById('today-label').textContent = formatDate(currentViewDate);
+        const container = document.getElementById('daily-todo-list');
+        if(!todos.length){ container.innerHTML='<div style="padding:20px;text-align:center;color:var(--text3);">此日尚未镌刻</div>'; }
+        else {
+            container.innerHTML = todos.map((t,i)=>`<div class="todo-item"><div class="todo-checkbox${t.completed?' done':''}" onclick="toggleDailyTodo(${i})">${t.completed?'✓':''}</div><span class="todo-text${t.completed?' done':''}">${escapeHtml(t.title)}</span><span class="todo-priority priority-${t.priority||'mid'}"></span><span class="todo-del" onclick="deleteDailyTodo(${i})">×</span></div>`).join('');
+        }
+        // 如果不是今天，则隐藏添加输入框（防止误添加）
+        const addRow = document.getElementById('daily-add-row');
+        if (addRow) {
+            addRow.style.display = (currentViewDate === getToday()) ? 'flex' : 'none';
+        }
+    }
+    function addDailyTodo(){
+        if (currentViewDate !== getToday()) { showToast('只能为今日添加任务'); return; }
+        const input = document.getElementById('daily-todo-input');
+        const title = input.value.trim();
+        if(!title) return;
+        if(!appData.dailyTodos[currentViewDate]) appData.dailyTodos[currentViewDate] = [];
+        appData.dailyTodos[currentViewDate].push({id:genId(), title, completed:false, priority:document.getElementById('daily-todo-priority').value});
+        input.value=''; saveData(appData); renderDailyTodos(); renderCalendarWidget();
+    }
+    function toggleDailyTodo(i){
+        if(appData.dailyTodos[currentViewDate]?.[i]){
+            appData.dailyTodos[currentViewDate][i].completed = !appData.dailyTodos[currentViewDate][i].completed;
+            saveData(appData); renderDailyTodos();
+        }
+    }
+    function deleteDailyTodo(i){
+        if(appData.dailyTodos[currentViewDate]){
+            appData.dailyTodos[currentViewDate].splice(i,1);
+            if(!appData.dailyTodos[currentViewDate].length) delete appData.dailyTodos[currentViewDate];
+            saveData(appData); renderDailyTodos(); renderCalendarWidget();
+        }
+    }
 
     function renderTodos(){
         const sorted=[...appData.todos].sort((a,b)=>{ if(a.completed!==b.completed)return a.completed?1:-1; return ({high:0,mid:1,low:2}[a.priority]||1)-({high:0,mid:1,low:2}[b.priority]||1); });
@@ -654,6 +697,8 @@
     function finishDrag(cx){ const dx=cx-dragStartX, bw=dragBarElement.offsetWidth; let np=dragStartProgress+Math.round((dx/bw)*100); np=Math.min(100,Math.max(0,np)); const p=appData.ganttProjects.find(p=>p.id===dragProjectId), t=p?.tasks.find(t=>t.id===dragTaskId); if(t){ t.progress=np; saveData(appData); refreshGanttEditor(); renderGantt(); } isDragging=false; dragTaskId=null; dragProjectId=null; dragBarElement=null; }
 
     async function initApp(){
+        // 每次启动重置为今天
+        currentViewDate = getToday();
         if(!checkSetup()){ renderAllUI(); return; }
         if(SYNC_ENABLED){ const cloud=await fetchFromGist(); if(cloud){ appData=cloud; saveLocalData(appData); } }
         applyTheme(); renderAllUI();
