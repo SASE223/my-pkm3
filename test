@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>几何体雨境 · 动画验证</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background: #1a1714;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            font-family: 'Times New Roman', 'Songti SC', serif;
+        }
+        canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+        .overlay-text {
+            position: relative;
+            z-index: 1;
+            color: #a49e94;
+            font-size: 14px;
+            letter-spacing: 2px;
+            text-align: center;
+            margin-top: 240px;
+            font-style: italic;
+            opacity: 0.8;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+    <div class="overlay-text">归拢时序，拂去尘埃……</div>
+
+    <script>
+        (function() {
+            const canvas = document.getElementById('canvas');
+            const ctx = canvas.getContext('2d');
+            let width, height;
+
+            // 几何体顶点 (正二十面体简化，实际用八面体更轻量)
+            // 这里使用八面体 + 旋转矩阵展示
+            const vertices = [
+                [1, 0, 0], [-1, 0, 0], [0, 1, 0], [0, -1, 0], [0, 0, 1], [0, 0, -1]
+            ];
+            const edges = [
+                [0,2], [2,1], [1,3], [3,0], // 顶底环
+                [0,4], [1,4], [2,4], [3,4], // 上顶点
+                [0,5], [1,5], [2,5], [3,5]  // 下顶点
+            ];
+            let angleX = 0, angleY = 0, angleZ = 0;
+
+            // 雨滴系统
+            class RainDrop {
+                constructor() {
+                    this.reset(true);
+                }
+                reset(init = false) {
+                    this.x = Math.random() * width;
+                    this.y = init ? Math.random() * height : -20;
+                    this.speed = Math.random() * 4 + 6;
+                    this.length = Math.random() * 10 + 6;
+                    this.opacity = Math.random() * 0.4 + 0.3;
+                }
+                update() {
+                    this.y += this.speed;
+                    // 落地溅射
+                    if (this.y > height * 0.7) { // 地面线在70%高度
+                        for (let i = 0; i < 3; i++) {
+                            splashes.push(new Splash(this.x, height * 0.7));
+                        }
+                        this.reset();
+                    }
+                }
+                draw(ctx) {
+                    const gradient = ctx.createLinearGradient(this.x, this.y, this.x + this.length * 0.2, this.y - this.length);
+                    gradient.addColorStop(0, 'rgba(201,169,97,0)');
+                    gradient.addColorStop(1, `rgba(201,169,97,${this.opacity})`);
+                    ctx.beginPath();
+                    ctx.moveTo(this.x, this.y);
+                    ctx.lineTo(this.x + this.length * 0.15, this.y - this.length);
+                    ctx.strokeStyle = gradient;
+                    ctx.lineWidth = 0.8;
+                    ctx.stroke();
+                }
+            }
+
+            class Splash {
+                constructor(x, y) {
+                    this.x = x;
+                    this.y = y;
+                    this.vx = (Math.random() - 0.5) * 1.5;
+                    this.vy = -(Math.random() * 2 + 1);
+                    this.life = 1;
+                    this.decay = Math.random() * 0.02 + 0.015;
+                }
+                update() {
+                    this.life -= this.decay;
+                    this.x += this.vx;
+                    this.y += this.vy;
+                    this.vy += 0.05; // 重力
+                }
+                draw(ctx) {
+                    ctx.fillStyle = `rgba(201,169,97,${this.life * 0.5})`;
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, 1.5, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            }
+
+            const raindrops = [];
+            const splashes = [];
+            const MAX_RAIN = 80;
+
+            function resize() {
+                width = canvas.width = window.innerWidth;
+                height = canvas.height = window.innerHeight;
+                // 重置雨滴位置
+                raindrops.length = 0;
+                for (let i = 0; i < MAX_RAIN; i++) {
+                    raindrops.push(new RainDrop());
+                }
+            }
+            window.addEventListener('resize', resize);
+            resize();
+
+            function project(x, y, z) {
+                const scale = 200 / (z + 4); // 透视
+                const px = x * scale + width / 2;
+                const py = -y * scale + height * 0.4; // 几何体中心偏上
+                return [px, py];
+            }
+
+            function rotateVertex(v) {
+                let [x, y, z] = v;
+                // 绕X轴
+                const cosX = Math.cos(angleX), sinX = Math.sin(angleX);
+                let y1 = y * cosX - z * sinX;
+                let z1 = y * sinX + z * cosX;
+                y = y1; z = z1;
+
+                // 绕Y轴
+                const cosY = Math.cos(angleY), sinY = Math.sin(angleY);
+                let x1 = x * cosY + z * sinY;
+                let z2 = -x * sinY + z * cosY;
+                x = x1; z = z2;
+
+                // 绕Z轴
+                const cosZ = Math.cos(angleZ), sinZ = Math.sin(angleZ);
+                let x2 = x * cosZ - y * sinZ;
+                let y2 = x * sinZ + y * cosZ;
+                return [x2, y2, z];
+            }
+
+            function drawGeometry() {
+                ctx.save();
+                ctx.shadowBlur = 12;
+                ctx.shadowColor = 'rgba(201,169,97,0.5)';
+                ctx.strokeStyle = '#C9A961';
+                ctx.lineWidth = 1.2;
+                const projected = vertices.map(v => project(...rotateVertex(v)));
+                edges.forEach(([a, b]) => {
+                    ctx.beginPath();
+                    ctx.moveTo(projected[a][0], projected[a][1]);
+                    ctx.lineTo(projected[b][0], projected[b][1]);
+                    ctx.stroke();
+                });
+                // 顶点光点
+                projected.forEach(([px, py]) => {
+                    ctx.fillStyle = '#E8C97A';
+                    ctx.shadowBlur = 8;
+                    ctx.beginPath();
+                    ctx.arc(px, py, 2.5, 0, Math.PI * 2);
+                    ctx.fill();
+                });
+                ctx.restore();
+            }
+
+            function drawGroundLine() {
+                const y = height * 0.7;
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(width, y);
+                ctx.strokeStyle = 'rgba(201,169,97,0.15)';
+                ctx.lineWidth = 0.5;
+                ctx.stroke();
+            }
+
+            function animate() {
+                ctx.clearRect(0, 0, width, height);
+
+                // 背景微光渐变
+                const bgGrad = ctx.createRadialGradient(width/2, height*0.4, 50, width/2, height*0.4, 350);
+                bgGrad.addColorStop(0, 'rgba(201,169,97,0.04)');
+                bgGrad.addColorStop(1, 'rgba(26,23,20,0)');
+                ctx.fillStyle = bgGrad;
+                ctx.fillRect(0, 0, width, height);
+
+                drawGroundLine();
+
+                // 绘制几何体
+                drawGeometry();
+
+                // 下雨
+                raindrops.forEach(drop => {
+                    drop.update();
+                    drop.draw(ctx);
+                });
+
+                // 溅射
+                for (let i = splashes.length - 1; i >= 0; i--) {
+                    splashes[i].update();
+                    splashes[i].draw(ctx);
+                    if (splashes[i].life <= 0) splashes.splice(i, 1);
+                }
+
+                // 旋转几何体
+                angleX += 0.005;
+                angleY += 0.008;
+                angleZ += 0.003;
+
+                requestAnimationFrame(animate);
+            }
+
+            animate();
+        })();
+    </script>
+</body>
+</html>
