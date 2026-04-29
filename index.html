@@ -216,10 +216,13 @@
             }
         }
 
+        /* ============================================================ */
+        /*  ✦ 侧栏 — 使用独立背景变量                                     */
+        /* ============================================================ */
         .sidebar {
             width: var(--sidebar-w);
             height: 100vh;
-            background: var(--surface);
+            background: var(--sidebar-bg);        /* 独立控制：相对不透明 */
             backdrop-filter: var(--frosted-glass);
             border-right: 1px solid var(--border);
             display: flex;
@@ -459,7 +462,7 @@
         }
 
         /* ============================================================ */
-        /*  ✦ 优化后的提醒面板 — 卡片式设计，与整体风格统一               */
+        /*  ✦ 优化后的提醒面板 — 卡片式设计，独立透明度                   */
         /* ============================================================ */
         .reminder-dropdown {
             display: none;
@@ -469,14 +472,13 @@
             z-index: 200;
             min-width: 320px;
             max-width: 360px;
-            background: var(--surface);
+            background: var(--dropdown-bg);       /* 独立控制：更透明 */
             backdrop-filter: var(--frosted-glass);
             border: 1px solid var(--border);
             border-radius: var(--radius-sm);
             box-shadow: var(--shadow-lg);
             padding: 0;
             overflow: hidden;
-            /* 入场动画 */
             animation: reminderFadeIn 0.25s ease-out;
         }
         .reminder-dropdown.show {
@@ -494,7 +496,6 @@
             }
         }
 
-        /* 卡片内部 */
         .reminder-card {
             padding: 18px 20px 16px;
             display: flex;
@@ -502,7 +503,6 @@
             gap: 0;
         }
 
-        /* 标题 */
         .reminder-title {
             font-size: 15px;
             letter-spacing: 3px;
@@ -519,22 +519,22 @@
             font-size: 18px;
         }
 
-        /* 选项列表 */
+        /* 选项列表 — 使用flex防挤压 */
         .reminder-options {
             display: flex;
             flex-direction: column;
             gap: 2px;
         }
 
-        /* 单个选项 — 行 */
         .reminder-option {
             display: flex;
             align-items: center;
-            padding: 6px 6px 6px 0;
+            justify-content: space-between;
+            padding: 6px 4px 6px 0;
             border-radius: var(--radius-xs);
             transition: background 0.2s;
             cursor: pointer;
-            position: relative;
+            gap: 4px;
         }
         .reminder-option:hover {
             background: var(--accent-light);
@@ -543,14 +543,13 @@
             background: var(--accent-light);
         }
 
-        /* 自定义单选按钮 (仿原 todo-checkbox 风格) */
         .reminder-radio {
+            flex: 1;
+            min-width: 80px;
             display: flex;
             align-items: center;
             gap: 10px;
             cursor: pointer;
-            flex: 1;
-            min-width: 0;
         }
         .reminder-radio input[type="radio"] {
             display: none;
@@ -593,14 +592,13 @@
             white-space: nowrap;
         }
 
-        /* 子设置项 (右侧) */
+        /* 子设置项 — 靠右，防挤压 */
         .reminder-sub {
+            flex-shrink: 0;
             display: flex;
             align-items: center;
-            gap: 6px;
-            margin-left: auto;
-            flex-shrink: 0;
-            padding-left: 12px;
+            gap: 4px;
+            margin-left: 8px;
         }
         .reminder-sub .sub-label {
             font-size: 12px;
@@ -631,7 +629,6 @@
             color: var(--text3);
         }
 
-        /* 底部 */
         .reminder-divider {
             border: none;
             border-top: 1px solid var(--border);
@@ -650,8 +647,30 @@
             transform: translateY(-1px);
         }
 
+        /* 移动端适配 — 窄屏时子设置换行 */
+        @media (max-width: 900px) {
+            .reminder-option {
+                flex-wrap: wrap;
+                padding: 6px 0;
+            }
+            .reminder-radio {
+                width: 100%;
+                flex: none;
+                min-width: 100px;
+                padding: 2px 0;
+            }
+            .reminder-sub {
+                width: 100%;
+                margin-left: 28px;
+                justify-content: flex-start;
+                flex-wrap: nowrap;
+                padding: 2px 0 4px;
+                gap: 6px;
+            }
+        }
+
         /* ============================================================ */
-        /*  ✦ 其余样式保持原样                                           */
+        /*  ✦ 其余原有样式                                               */
         /* ============================================================ */
 
         .content-area {
@@ -1161,36 +1180,6 @@
             }
             .gantt-project-list {
                 max-height: 150px;
-            }
-
-            /* 移动端提醒面板适配 */
-            .reminder-dropdown {
-                min-width: 0;
-                width: calc(100vw - 32px);
-                max-width: 360px;
-                right: -8px;
-                top: calc(100% + 6px);
-            }
-            .reminder-card {
-                padding: 14px 16px 14px;
-            }
-            .reminder-option {
-                flex-wrap: wrap;
-                padding: 6px 0;
-            }
-            .reminder-sub {
-                padding-left: 28px;
-                margin-left: 0;
-                width: 100%;
-                justify-content: flex-start;
-                margin-top: 2px;
-            }
-            .reminder-sub input[type="number"],
-            .reminder-sub input[type="time"] {
-                width: 56px;
-            }
-            .reminder-sub input[type="time"] {
-                width: 68px;
             }
         }
     </style>
@@ -1953,11 +1942,9 @@
             /*  ✦ 提醒面板 UI 状态同步 (适配新结构)                         */
             /* ============================================================ */
             function loadReminderUI() {
-                // 选中对应的 radio
                 document.querySelectorAll('#reminder-dropdown input[name="reminder-type"]').forEach(r => {
                     r.checked = (r.value === appSettings.reminderType);
                 });
-                // 高亮当前选中的 option 行
                 document.querySelectorAll('#reminder-dropdown .reminder-option').forEach(el => {
                     el.classList.toggle('active-option', el.dataset.value === appSettings.reminderType);
                 });
@@ -1990,7 +1977,6 @@
                     const radio = optionRow.querySelector('input[type="radio"]');
                     if (radio) {
                         radio.checked = true;
-                        // 更新高亮
                         document.querySelectorAll('#reminder-dropdown .reminder-option').forEach(el => el.classList
                             .remove('active-option'));
                         optionRow.classList.add('active-option');
@@ -2002,7 +1988,6 @@
                 e.stopPropagation();
                 const dropdown = document.getElementById('reminder-dropdown');
                 const isShowing = dropdown.classList.contains('show');
-                // 关闭所有其他下拉
                 document.querySelectorAll('.reminder-dropdown.show').forEach(el => el.classList.remove('show'));
                 if (!isShowing) {
                     dropdown.classList.add('show');
@@ -2025,7 +2010,6 @@
                 refreshGanttEditor();
                 renderGantt();
                 setupReminder();
-                // 只当面板显示时加载UI (否则会在初始化时加载)
                 if (document.getElementById('reminder-dropdown').classList.contains('show')) {
                     loadReminderUI();
                 }
