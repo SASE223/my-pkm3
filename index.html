@@ -54,75 +54,27 @@
             --shadow-panel: 0 8px 28px rgba(0,0,0,0.08), 0 0 1px rgba(95,127,158,0.12);
         }
 
-        /* ========== 背景纹理层 ========== */
-        body::before {
-            content: '';
-            position: fixed; top:0; left:0; width:100%; height:100%;
-            pointer-events: none; z-index: -2;
-            background: var(--bg);
-        }
-
-        /* 深色模式：鎏金黑绒布纹理 */
-        body::after {
-            content: '';
-            position: fixed; top:0; left:0; width:100%; height:100%;
-            pointer-events: none; z-index: -1;
-            opacity:0.7;
-            background-image: 
-                repeating-linear-gradient(38deg, rgba(201,169,97,0.03) 0px, rgba(201,169,97,0.03) 1px, transparent 1px, transparent 6px),
-                repeating-linear-gradient(-52deg, rgba(232,201,122,0.025) 0px, rgba(232,201,122,0.025) 1px, transparent 1px, transparent 9px),
-                radial-gradient(circle at 18% 22%, rgba(201,169,97,0.06) 1px, transparent 1px),
-                radial-gradient(circle at 52% 38%, rgba(232,201,122,0.05) 1px, transparent 1px),
-                radial-gradient(circle at 75% 55%, rgba(201,169,97,0.055) 1px, transparent 1px),
-                radial-gradient(circle at 33% 68%, rgba(232,201,122,0.04) 1px, transparent 1px),
-                radial-gradient(circle at 88% 25%, rgba(201,169,97,0.05) 1px, transparent 1px),
-                radial-gradient(circle at 10% 80%, rgba(232,201,122,0.045) 1px, transparent 1px),
-                radial-gradient(circle at 62% 72%, rgba(201,169,97,0.05) 1px, transparent 1px),
-                radial-gradient(circle at 45% 12%, rgba(232,201,122,0.04) 1px, transparent 1px);
-            background-size: 24px 24px, 28px 28px, 40px 40px, 48px 48px, 36px 36px, 44px 44px, 38px 38px, 42px 42px, 46px 46px, 34px 34px;
-            mix-blend-mode: overlay;
-        }
-
-        /* 浅色模式：冷调灰蓝大理石纹理 */
-        [data-theme="light"]::after {
-            opacity:0.5;
-            background-image: 
-                linear-gradient(118deg, rgba(100,120,140,0.06), rgba(80,100,125,0.015) 30%, rgba(110,130,150,0.04) 60%, rgba(90,110,130,0.02)),
-                repeating-linear-gradient(90deg, rgba(80,90,110,0.05) 0px, rgba(80,90,110,0.05) 1px, transparent 1px, transparent 14px),
-                repeating-linear-gradient(0deg, rgba(100,110,125,0.04) 0px, rgba(100,110,125,0.04) 1px, transparent 1px, transparent 14px),
-                repeating-linear-gradient(35deg, rgba(90,105,120,0.03) 0px, rgba(90,105,120,0.03) 1px, transparent 1px, transparent 22px),
-                repeating-linear-gradient(-55deg, rgba(110,125,140,0.025) 0px, rgba(110,125,140,0.025) 1px, transparent 1px, transparent 26px);
-            background-size: 100% 100%, 28px 28px, 28px 28px, 40px 40px, 36px 36px;
-            mix-blend-mode: multiply;
-        }
+        body::before { content:''; position:fixed; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:-2; background:var(--bg); }
+        body::after { content:''; position:fixed; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:-1; opacity:0.7;
+            background-image: repeating-linear-gradient(38deg, rgba(201,169,97,0.03) 0px, rgba(201,169,97,0.03) 1px, transparent 1px, transparent 6px), repeating-linear-gradient(-52deg, rgba(232,201,122,0.025) 0px, rgba(232,201,122,0.025) 1px, transparent 1px, transparent 9px), radial-gradient(circle at 18% 22%, rgba(201,169,97,0.06) 1px, transparent 1px), radial-gradient(circle at 52% 38%, rgba(232,201,122,0.05) 1px, transparent 1px), radial-gradient(circle at 75% 55%, rgba(201,169,97,0.055) 1px, transparent 1px), radial-gradient(circle at 33% 68%, rgba(232,201,122,0.04) 1px, transparent 1px), radial-gradient(circle at 88% 25%, rgba(201,169,97,0.05) 1px, transparent 1px), radial-gradient(circle at 10% 80%, rgba(232,201,122,0.045) 1px, transparent 1px), radial-gradient(circle at 62% 72%, rgba(201,169,97,0.05) 1px, transparent 1px), radial-gradient(circle at 45% 12%, rgba(232,201,122,0.04) 1px, transparent 1px);
+            background-size: 24px 24px, 28px 28px, 40px 40px, 48px 48px, 36px 36px, 44px 44px, 38px 38px, 42px 42px, 46px 46px, 34px 34px; mix-blend-mode: overlay; }
+        [data-theme="light"]::after { opacity:0.5;
+            background-image: linear-gradient(118deg, rgba(100,120,140,0.06), rgba(80,100,125,0.015) 30%, rgba(110,130,150,0.04) 60%, rgba(90,110,130,0.02)), repeating-linear-gradient(90deg, rgba(80,90,110,0.05) 0px, rgba(80,90,110,0.05) 1px, transparent 1px, transparent 14px), repeating-linear-gradient(0deg, rgba(100,110,125,0.04) 0px, rgba(100,110,125,0.04) 1px, transparent 1px, transparent 14px), repeating-linear-gradient(35deg, rgba(90,105,120,0.03) 0px, rgba(90,105,120,0.03) 1px, transparent 1px, transparent 22px), repeating-linear-gradient(-55deg, rgba(110,125,140,0.025) 0px, rgba(110,125,140,0.025) 1px, transparent 1px, transparent 26px);
+            background-size: 100% 100%, 28px 28px, 28px 28px, 40px 40px, 36px 36px; mix-blend-mode: multiply; }
 
         * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; -webkit-user-select:none; user-select:none; }
-        input, textarea, select { -webkit-user-select:text; user-select:text; font-family:var(--font); background:rgba(255,255,255,0.06); border:1px solid var(--border); color:var(--text); padding:10px 12px; border-radius:var(--radius-xs); outline:none; transition:var(--transition); letter-spacing:0.5px; }
+        input, textarea, select { -webkit-user-select:text; user-select:text; font-family:var(--font); background:rgba(255,255,255,0.06); border:1px solid var(--border); color:var(--text); padding:10px 12px; border-radius:var(--radius-xs); outline:none; transition:var(--transition); }
         [data-theme="light"] input, [data-theme="light"] textarea, [data-theme="light"] select { background:rgba(255,255,255,0.7); }
         input:focus, textarea:focus, select:focus { border-color:var(--accent); box-shadow:0 0 14px var(--accent-glow); }
         body { font-family:var(--font); background:var(--bg); color:var(--text); height:100vh; overflow:hidden; display:flex; padding-top:var(--safe-top); position:relative; letter-spacing:0.3px; overscroll-behavior: none; }
 
-        /* 加载遮罩 */
-        .loading-veil {
-            position:fixed; top:0; left:0; width:100%; height:100%;
-            background: var(--bg); backdrop-filter:blur(12px); z-index:3000;
-            display:flex; align-items:center; justify-content:center; flex-direction:column;
-            transition: opacity 0.45s; font-family:var(--font); letter-spacing:2px;
-        }
+        .loading-veil { position:fixed; top:0; left:0; width:100%; height:100%; background:var(--bg); backdrop-filter:blur(12px); z-index:3000; display:flex; align-items:center; justify-content:center; flex-direction:column; transition:opacity 0.45s; font-family:var(--font); letter-spacing:2px; }
         .loading-veil.hide { opacity:0; visibility:hidden; pointer-events:none; }
-        #loading-canvas {
-            position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none;
-        }
-        .loading-quote {
-            position: relative; z-index: 2; color: var(--text2);
-            font-size: 14px; letter-spacing: 2px; text-align: center;
-            font-style: italic; opacity: 0.85; width: 300px;
-            border-left: 2px solid var(--accent); padding-left: 18px;
-            transition: opacity 0.5s;
-        }
+        #loading-canvas { position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; }
+        .loading-quote { position:relative; z-index:2; color:var(--text2); font-size:14px; letter-spacing:2px; text-align:center; font-style:italic; opacity:0.85; width:300px; border-left:2px solid var(--accent); padding-left:18px; transition:opacity 0.5s; }
 
-        .sidebar { width:var(--sidebar-w); height:100vh; background:var(--surface); backdrop-filter:var(--frosted-glass); border-right:1px solid var(--border); display:flex; flex-direction:column; transition:transform 0.35s; z-index:100; flex-shrink:0; box-shadow:var(--shadow-panel); position:relative; }
-        .sidebar::after { content:''; position:absolute; top:0; right:0; width:1px; height:100%; background:var(--accent); opacity:0.15; pointer-events:none; }
+        .sidebar { width:var(--sidebar-w); height:100vh; background:var(--surface); backdrop-filter:var(--frosted-glass); border-right:1px solid var(--border); display:flex; flex-direction:column; transition:transform 0.35s; z-index:100; flex-shrink:0; box-shadow:var(--shadow-panel); }
+        .sidebar::after { content:''; position:absolute; top:0; right:0; width:1px; height:100%; background:var(--accent); opacity:0.15; }
         .sidebar.collapsed { transform:translateX(-100%); width:0; }
         .sidebar-tabs { display:flex; border-bottom:1px solid var(--border); background:rgba(0,0,0,0.08); }
         .sidebar-tab { flex:1; padding:14px 6px; text-align:center; cursor:pointer; font-size:13px; color:var(--text3); border-bottom:1px solid transparent; transition:var(--transition); letter-spacing:2px; text-transform:uppercase; }
@@ -132,7 +84,7 @@
 
         .notes-list-header { display:flex; gap:6px; padding:4px 0 12px; align-items:center; flex-wrap:wrap; }
         .notes-list-header input { flex:1; min-width:120px; }
-        .filter-tag { font-size:11px; padding:4px 10px; background:var(--accent-light); color:var(--accent); border-radius:10px; display:inline-flex; align-items:center; gap:4px; cursor:default; }
+        .filter-tag { font-size:11px; padding:4px 10px; background:var(--accent-light); color:var(--accent); border-radius:10px; display:inline-flex; align-items:center; gap:4px; }
         .filter-tag .clear-filter { cursor:pointer; margin-left:4px; opacity:0.7; }
         .filter-tag .clear-filter:hover { opacity:1; }
         .notes-list { flex:1; overflow-y:auto; display:flex; flex-direction:column; gap:4px; }
@@ -143,7 +95,7 @@
         .note-del:hover { opacity:1; }
         .note-item:hover .note-del { visibility:visible; }
 
-        .btn { padding:10px 18px; font-size:13px; border:1px solid var(--accent); background:transparent; color:var(--accent); cursor:pointer; letter-spacing:1.5px; border-radius:1px; transition:all 0.25s; white-space:nowrap; text-transform:uppercase; position:relative; top:0; box-shadow:0 1px 0 rgba(0,0,0,0.2); }
+        .btn { padding:10px 18px; font-size:13px; border:1px solid var(--accent); background:transparent; color:var(--accent); cursor:pointer; letter-spacing:1.5px; border-radius:1px; transition:all 0.25s; white-space:nowrap; text-transform:uppercase; box-shadow:0 1px 0 rgba(0,0,0,0.2); }
         .btn:hover { background:var(--accent); color:var(--bg); transform:translateY(-2px); box-shadow:0 6px 16px rgba(0,0,0,0.3); }
         .btn:active { transform:translateY(0); box-shadow:0 1px 0 rgba(0,0,0,0.2); }
         .btn-accent { background:var(--accent); color:var(--bg); }
@@ -160,7 +112,6 @@
         .spacer { flex:1; }
         .reminder-btn, .theme-toggle { cursor:pointer; font-size:20px; padding:8px; background:none; border:none; color:var(--text2); }
         .reminder-btn:hover, .theme-toggle:hover { color:var(--accent); }
-
         .reminder-dropdown { display:none; position:absolute; top:48px; right:0; background:var(--surface); backdrop-filter:var(--frosted-glass); border:1px solid var(--border); padding:16px; z-index:200; min-width:260px; border-radius:var(--radius-sm); box-shadow:var(--shadow-lg); }
         .reminder-dropdown.show { display:block; }
 
@@ -213,8 +164,7 @@
         .gantt-day-header.today-col { background:rgba(201,169,97,0.1); font-weight:600; color:var(--accent); }
 
         .gantt-project-item, .gantt-task-mini-item { display:flex; align-items:center; gap:10px; padding:10px 0; border-bottom:1px solid rgba(255,255,255,0.04); cursor:pointer; transition:var(--transition); }
-        [data-theme="light"] .gantt-project-item, [data-theme="light"] .gantt-task-mini-item { border-bottom-color: rgba(0,0,0,0.04); }
-        .gantt-project-item:hover, .gantt-task-mini-item:hover { background: var(--accent-light); }
+        .gantt-project-item:hover, .gantt-task-mini-item:hover { background:var(--accent-light); }
         .gantt-project-item .project-name, .gantt-task-mini-item .task-name { flex:1; font-size:13px; }
         .gantt-project-item .project-count, .gantt-task-mini-item .task-progress { font-size:10px; color:var(--text3); margin-right:4px; }
         .gantt-project-item .project-del, .gantt-task-mini-item .task-del { visibility:hidden; cursor:pointer; color:#8B0000; font-size:16px; opacity:0.5; }
@@ -277,25 +227,24 @@
             <div style="font-size:11px;color:var(--text3);padding:8px;text-align:center;">点击一日，窥见那天的残片</div>
         </div>
         <div class="sidebar-panel" id="panel-gantt-edit">
-            <div class="gantt-editor-section"><h4>时序 · 项目</h4><select id="gantt-project-select" onchange="selectGanttProject()"><option value="">-- 选本 --</option></select><div class="gantt-task-row"><input type="text" id="new-project-name" placeholder="新项目名称"><button class="btn btn-accent" onclick="createGanttProject()">创</button></div><div class="gantt-project-list" id="gantt-project-list"></div><hr><h4>编纂任务</h4><div class="gantt-task-row"><input type="text" id="new-task-name" placeholder="任务名"></div><div class="gantt-task-row"><input type="date" id="new-task-start"><input type="date" id="new-task-end"></div><div class="gantt-task-row"><input type="number" id="new-task-progress" placeholder="进度%" min="0" max="100" value="0" style="max-width:70px;"><select id="new-task-color"><option value="#C9A961">琥珀金</option><option value="#4A5D6F">烟蓝</option><option value="#8B0000">血</option><option value="#5b7a6a">苔绿</option></select><button class="btn btn-accent" id="task-save-btn" onclick="addTaskToProject()">添加</button><button class="btn btn-outline" id="task-cancel-btn" onclick="cancelEditTask()" style="display:none;">取消</button></div><div id="gantt-tasks-mini-list"></div></div>
+            <div class="gantt-editor-section"><h4>时序 · 项目</h4><select id="gantt-project-select" onchange="selectGanttProject()"><option value="">-- 选本 --</option></select><div class="gantt-task-row"><input type="text" id="new-project-name" placeholder="新项目名称"><button class="btn btn-accent" onclick="createGanttProject()">创</button></div><div class="gantt-project-list" id="gantt-project-list"></div><hr><h4>编纂任务</h4><div><input type="text" id="new-task-name" placeholder="任务名"></div><div><input type="date" id="new-task-start"><input type="date" id="new-task-end"></div><div><input type="number" id="new-task-progress" placeholder="进度%" min="0" max="100" value="0" style="max-width:70px;"><select id="new-task-color"><option value="#C9A961">琥珀金</option><option value="#4A5D6F">烟蓝</option><option value="#8B0000">血</option><option value="#5b7a6a">苔绿</option></select><button class="btn btn-accent" id="task-save-btn" onclick="addTaskToProject()">添加</button><button class="btn btn-outline" id="task-cancel-btn" onclick="cancelEditTask()" style="display:none;">取消</button></div><div id="gantt-tasks-mini-list"></div></div>
         </div>
     </aside>
 
     <div class="main-area">
         <div class="top-bar"><button class="hamburger" id="hamburger-btn">☰</button><span class="page-title" id="page-title">Reverse Chronicle</span><span class="spacer"></span><button class="theme-toggle" id="theme-toggle">◑</button><button class="reminder-btn" id="reminder-btn">⏳</button><div class="reminder-dropdown" id="reminder-dropdown"><strong style="color:var(--accent);">⏰ 司辰提醒</strong><label><input type="radio" name="reminder-type" value="none" checked> 静谧</label><label><input type="radio" name="reminder-type" value="random-note"> 📜 随机纪事</label><label style="margin-left:20px;">间隔(分): <input type="number" id="random-interval" value="30" min="5"></label><label><input type="radio" name="reminder-type" value="habit"> ✅ 习惯</label><label style="margin-left:20px;">时间: <input type="time" id="habit-reminder-time" value="09:00"></label><button class="btn btn-accent" onclick="saveReminderSettings()" style="width:100%;margin-top:8px;">铭记设定</button></div></div>
-
         <div class="content-area">
             <div class="top-panels">
-                <div class="panel"><div class="panel-header" id="date-panel-header"><span id="date-title-text">☉ 今日残片</span> <span id="selected-date-label"></span></div><div class="panel-body" id="daily-todo-list"></div><div class="add-todo-row"><input type="text" id="daily-todo-input" placeholder="添刻今日印记…"><select id="daily-todo-priority" style="max-width:60px;"><option value="low">轻</option><option value="mid" selected>中</option><option value="high">重</option></select><button class="btn btn-accent" onclick="addDailyTodo()">＋</button></div><div class="review-entry" onclick="openReviewModal()">→ 夜间复盘</div><div class="note-block"><div class="note-block-title">此日迷思</div><div id="date-related-notes"></div></div></div>
-                <div class="panel"><div class="panel-header">⌛ 待办列</div><div class="panel-body" id="todo-list"></div><div class="add-todo-row"><input type="text" id="todo-input" placeholder="新待办…"><select id="todo-priority" style="max-width:60px;"><option value="low">轻</option><option value="mid" selected>中</option><option value="high">重</option></select><button class="btn btn-accent" onclick="addTodo()">＋</button></div></div>
+                <div class="panel"><div class="panel-header"><span id="date-title-text">☉ 今日残片</span> <span id="selected-date-label"></span></div><div class="panel-body" id="daily-todo-list"></div><div class="add-todo-row"><input type="text" id="daily-todo-input" placeholder="添刻今日印记…"><select id="daily-todo-priority"><option value="low">轻</option><option value="mid" selected>中</option><option value="high">重</option></select><button class="btn btn-accent" onclick="addDailyTodo()">＋</button></div><div class="review-entry" onclick="openReviewModal()">→ 夜间复盘</div><div class="note-block"><div class="note-block-title">此日迷思</div><div id="date-related-notes"></div></div></div>
+                <div class="panel"><div class="panel-header">⌛ 待办列</div><div class="panel-body" id="todo-list"></div><div class="add-todo-row"><input type="text" id="todo-input" placeholder="新待办…"><select id="todo-priority"><option value="low">轻</option><option value="mid" selected>中</option><option value="high">重</option></select><button class="btn btn-accent" onclick="addTodo()">＋</button></div></div>
             </div>
-            <div class="gantt-panel"><div class="panel-header"><span style="white-space:nowrap;">⟁ 甘特图</span><select id="gantt-view-select" onchange="loadGanttView()"><option value="">-- 选项目 --</option></select><span id="gantt-date-range" style="font-size:11px;color:var(--text3);line-height:1.3;text-align:right;"></span></div><div class="gantt-viewport" id="gantt-viewport"><div class="gantt-chart" id="gantt-chart"><div style="padding:40px;text-align:center;color:var(--text3);">请在侧栏「时序」创建项目</div></div></div></div>
+            <div class="gantt-panel"><div class="panel-header"><span>⟁ 甘特图</span><select id="gantt-view-select" onchange="loadGanttView()"><option value="">-- 选项目 --</option></select><span id="gantt-date-range" style="font-size:11px;color:var(--text3);"></span></div><div class="gantt-viewport"><div class="gantt-chart" id="gantt-chart"><div style="padding:40px;text-align:center;color:var(--text3);">请在侧栏「时序」创建项目</div></div></div></div>
         </div>
     </div>
 
     <div class="modal-overlay" id="note-modal" style="display:none;"><div class="modal"><h3 id="note-modal-title">新建纪事</h3><input type="text" id="note-title-input" placeholder="标题"><div class="tag-list" id="note-type-tags"><span class="tag-chip selected" data-type="note">📜 纪事</span><span class="tag-chip" data-type="code">⌨️ 代码</span><span class="tag-chip" data-type="review">📋 复盘</span></div><textarea id="note-content-input" placeholder="在此书写…"></textarea><input type="text" id="note-tags-input" placeholder="标签（逗号分隔）"><div class="btn-row"><button class="btn btn-outline" onclick="closeNoteEditor()">取消</button><button class="btn btn-accent" onclick="saveNote()">保存</button></div></div></div>
-    <div class="modal-overlay" id="review-modal" style="display:none;"><div class="modal"><h3>夜间复盘 <span id="review-date-label" style="font-size:12px;color:var(--text3);"></span></h3><div><strong>习惯律动：</strong><div id="habit-check-list" style="margin:8px 0;"></div><button class="btn btn-outline" onclick="addHabitPrompt()">＋ 添加习惯</button></div><textarea id="review-content" placeholder="今日之思…"></textarea><div class="btn-row"><button class="btn btn-outline" onclick="closeReviewModal()">取消</button><button class="btn btn-accent" onclick="saveReview()">铭记复盘</button></div></div></div>
-    <div class="modal-overlay" id="setup-modal" style="display:none;"><div class="modal"><h3>司辰，请出示密钥</h3><p style="font-size:13px;color:var(--text2);">Gist ID 与 Token 仅存于这台设备的流溢中。<br>它们连通「箱子」深处的备份。</p><input type="text" id="setup-gist-id" placeholder="Gist ID（长串哈希）"><input type="password" id="setup-gist-token" placeholder="GitHub Token (ghp_ 开端)"><div class="btn-row"><button class="btn btn-accent" onclick="saveSetup()">同步并归拢</button></div><p style="font-size:10px;color:var(--text3);">若暂不联机，关闭此窗亦可离线书写。</p></div></div>
+    <div class="modal-overlay" id="review-modal" style="display:none;"><div class="modal"><h3>夜间复盘 <span id="review-date-label"></span></h3><div><strong>习惯律动：</strong><div id="habit-check-list"></div><button class="btn btn-outline" onclick="addHabitPrompt()">＋ 添加习惯</button></div><textarea id="review-content" placeholder="今日之思…"></textarea><div class="btn-row"><button class="btn btn-outline" onclick="closeReviewModal()">取消</button><button class="btn btn-accent" onclick="saveReview()">铭记复盘</button></div></div></div>
+    <div class="modal-overlay" id="setup-modal" style="display:none;"><div class="modal"><h3>司辰，请出示密钥</h3><p style="font-size:13px;color:var(--text2);">Gist ID 与 Token 仅存于这台设备的流溢中。<br>它们连通「箱子」深处的备份。</p><input type="text" id="setup-gist-id" placeholder="Gist ID"><input type="password" id="setup-gist-token" placeholder="GitHub Token"><div class="btn-row"><button class="btn btn-accent" onclick="saveSetup()">同步并归拢</button></div><p style="font-size:10px;color:var(--text3);">若暂不联机，关闭此窗亦可离线书写。</p></div></div>
 
     <script>
         (function(){
@@ -307,9 +256,8 @@
                 const quoteEl = document.getElementById('loading-quote-text');
                 let width, height, groundY, regionCenterX, regionCenterY;
                 const CENTER_ABOVE_GROUND = 120;
-                const QUOTE_BELOW_GROUND = 30;   // 语录在倒影下方30px
+                const QUOTE_BELOW_GROUND = 30;
 
-                // 圆弧参数
                 const BIG_RADIUS = 80;
                 const LINE_WIDTH = 5;
                 const GAP = 2 * LINE_WIDTH;
@@ -324,7 +272,6 @@
                 let smallMidAngle = 135;
                 let bigGapMidAngle = 135;
 
-                // 雨滴
                 class RainDrop {
                     constructor() { this.reset(true); }
                     reset(init) {
@@ -391,35 +338,47 @@
                     bigGapMidAngle = ((bigGapMidAngle % 360) + 360) % 360;
                 }
 
-                function drawArcs(opacity = 1.0) {
+                function drawArcsAtOrigin(opacity, shadow) {
                     ctx.save();
-                    ctx.translate(regionCenterX, regionCenterY);
-                    ctx.lineWidth = LINE_WIDTH; ctx.lineCap = 'butt';
-                    if (opacity >= 1.0) { ctx.shadowBlur = 10; ctx.shadowColor = 'rgba(201,169,97,0.7)'; }
+                    ctx.lineWidth = LINE_WIDTH;
+                    ctx.lineCap = 'butt';
+                    if (shadow) { ctx.shadowBlur = 10; ctx.shadowColor = 'rgba(201,169,97,0.7)'; }
                     else { ctx.shadowBlur = 0; ctx.shadowColor = 'transparent'; }
+
                     const gapStart = bigGapMidAngle - BIG_ARC_GAP_DEG/2;
                     const gapEnd = bigGapMidAngle + BIG_ARC_GAP_DEG/2;
                     function drawBig(radius, color) {
                         ctx.beginPath();
-                        ctx.arc(0,0,radius, (gapEnd*Math.PI)/180, ((gapStart+360)*Math.PI)/180);
-                        ctx.strokeStyle = color; ctx.stroke();
+                        ctx.arc(0, 0, radius, (gapEnd*Math.PI)/180, ((gapStart+360)*Math.PI)/180);
+                        ctx.strokeStyle = color;
+                        ctx.stroke();
                     }
                     drawBig(OUTER_R, `rgba(201,169,97,${opacity})`);
                     drawBig(INNER_R, `rgba(201,169,97,${opacity})`);
+
                     const half = SMALL_ARC_DEG/2;
                     let ss = smallMidAngle - half, se = smallMidAngle + half;
                     ctx.beginPath();
-                    ctx.arc(0,0,MID_R, (ss*Math.PI)/180, (se*Math.PI)/180);
-                    ctx.strokeStyle = `rgba(232,201,122,${opacity})`; ctx.stroke();
+                    ctx.arc(0, 0, MID_R, (ss*Math.PI)/180, (se*Math.PI)/180);
+                    ctx.strokeStyle = `rgba(232,201,122,${opacity})`;
+                    ctx.stroke();
+                    ctx.restore();
+                }
+
+                function drawArcs(opacity = 1.0) {
+                    ctx.save();
+                    ctx.translate(regionCenterX, regionCenterY);
+                    drawArcsAtOrigin(opacity, true);
                     ctx.restore();
                 }
 
                 function drawReflection() {
                     ctx.save();
                     ctx.translate(regionCenterX, groundY);
-                    ctx.scale(1, -0.5);   // 竖直压缩矩阵
-                    ctx.globalAlpha = 0.5;
-                    drawArcs(0.65);
+                    ctx.scale(1, -0.5);
+                    ctx.translate(0, -CENTER_ABOVE_GROUND);
+                    ctx.globalAlpha = 0.45;
+                    drawArcsAtOrigin(0.65, false);
                     ctx.globalAlpha = 1;
                     ctx.restore();
                 }
@@ -456,7 +415,6 @@
                 requestAnimationFrame(animate);
             }
 
-            // 初始化加载动画（当 loading-veil 显示时自动运行）
             window.addEventListener('load', () => {
                 initLoadingAnimation();
             });
@@ -502,7 +460,6 @@
                 }, 1800);
                 loadingVeil.classList.remove('hide');
                 loadingVeil.style.display = 'flex';
-                // 重新触发 resize 以适配 canvas
                 window.dispatchEvent(new Event('resize'));
             }
             function stopLoadingAndHide() {
@@ -644,7 +601,7 @@
                 refreshAllUI();
             };
             
-            // 全局函数暴露
+            // 暴露全局函数
             window.openNoteEditor = openNoteEditor;
             window.closeNoteEditor = closeNoteEditor;
             window.saveNote = saveNote;
