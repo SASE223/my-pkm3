@@ -7,7 +7,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>Hypomnema · 司辰手记</title>
     <style>
-        /* ========== 变量与纹理 ========== */
+        /* ========== 变量与纹理 (完整保留) ========== */
         :root {
             --bg: #1a1714;
             --surface: rgba(25,22,20,0.75);
@@ -71,7 +71,7 @@
         .loading-veil { position:fixed; top:0; left:0; width:100%; height:100%; background:var(--bg); backdrop-filter:blur(12px); z-index:3000; display:flex; align-items:center; justify-content:center; flex-direction:column; transition:opacity 0.45s; font-family:var(--font); letter-spacing:2px; }
         .loading-veil.hide { opacity:0; visibility:hidden; pointer-events:none; }
         #loading-canvas { position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; }
-        .loading-quote { position:relative; z-index:2; color:var(--text2); font-size:14px; letter-spacing:2px; text-align:center; font-style:italic; opacity:0.85; width:300px; border-left:2px solid var(--accent); padding-left:18px; transition:opacity 0.5s; }
+        .loading-quote { position:absolute; z-index:2; color:var(--text2); font-size:14px; letter-spacing:2px; text-align:center; font-style:italic; opacity:0.85; width:300px; left:50%; transform:translateX(-50%); border-left:2px solid var(--accent); padding-left:18px; transition:opacity 0.5s; }
 
         .sidebar { width:var(--sidebar-w); height:100vh; background:var(--surface); backdrop-filter:var(--frosted-glass); border-right:1px solid var(--border); display:flex; flex-direction:column; transition:transform 0.35s; z-index:100; flex-shrink:0; box-shadow:var(--shadow-panel); }
         .sidebar::after { content:''; position:absolute; top:0; right:0; width:1px; height:100%; background:var(--accent); opacity:0.15; }
@@ -255,17 +255,49 @@
                 const ctx = canvas.getContext('2d');
                 const quoteEl = document.getElementById('loading-quote-text');
                 let width, height, groundY, regionCenterX, regionCenterY;
-                const CENTER_ABOVE_GROUND = 120;
-                const QUOTE_BELOW_GROUND = 30;
+                let CENTER_ABOVE_GROUND = 120;
+                let QUOTE_BELOW_GROUND = 30;
+                let BIG_RADIUS = 80;
+                let LINE_WIDTH = 5;
+                let GAP = 2 * LINE_WIDTH;
+                let OUTER_R, INNER_R, MID_R;
+                let SMALL_ARC_DEG = 144;
+                let BIG_ARC_GAP_DEG = 90;
+                let MAX_RAIN = 110;
+                let RAIN_LENGTH_MIN = 18, RAIN_LENGTH_MAX = 40;
+                let RAIN_LINE_WIDTH_MIN = 0.6, RAIN_LINE_WIDTH_MAX = 1.4;
+                let SPLASH_RADIUS = 1.6;
 
-                const BIG_RADIUS = 80;
-                const LINE_WIDTH = 5;
-                const GAP = 2 * LINE_WIDTH;
-                const OUTER_R = BIG_RADIUS + GAP / 2;
-                const INNER_R = BIG_RADIUS - GAP / 2;
-                const MID_R = BIG_RADIUS;
-                const SMALL_ARC_DEG = 144;
-                const BIG_ARC_GAP_DEG = 90;
+                function updateParameters() {
+                    const isMobile = window.innerWidth <= 900;
+                    if (isMobile) {
+                        BIG_RADIUS = 55;
+                        LINE_WIDTH = 3.5;
+                        CENTER_ABOVE_GROUND = 100;
+                        QUOTE_BELOW_GROUND = 25;
+                        MAX_RAIN = 70;
+                        RAIN_LENGTH_MIN = 10;
+                        RAIN_LENGTH_MAX = 22;
+                        RAIN_LINE_WIDTH_MIN = 0.4;
+                        RAIN_LINE_WIDTH_MAX = 0.8;
+                        SPLASH_RADIUS = 1.2;
+                    } else {
+                        BIG_RADIUS = 80;
+                        LINE_WIDTH = 5;
+                        CENTER_ABOVE_GROUND = 120;
+                        QUOTE_BELOW_GROUND = 30;
+                        MAX_RAIN = 110;
+                        RAIN_LENGTH_MIN = 18;
+                        RAIN_LENGTH_MAX = 40;
+                        RAIN_LINE_WIDTH_MIN = 0.6;
+                        RAIN_LINE_WIDTH_MAX = 1.4;
+                        SPLASH_RADIUS = 1.6;
+                    }
+                    GAP = 2 * LINE_WIDTH;
+                    OUTER_R = BIG_RADIUS + GAP / 2;
+                    INNER_R = BIG_RADIUS - GAP / 2;
+                    MID_R = BIG_RADIUS;
+                }
 
                 let animStartTime = null;
                 const CYCLE_DURATION = 3500;
@@ -278,9 +310,9 @@
                         this.x = Math.random() * width;
                         this.y = init ? Math.random() * height : -30;
                         this.speed = Math.random() * 5 + 7;
-                        this.length = Math.random() * 22 + 18;
+                        this.length = RAIN_LENGTH_MIN + Math.random() * (RAIN_LENGTH_MAX - RAIN_LENGTH_MIN);
                         this.opacity = Math.random() * 0.5 + 0.6;
-                        this.lineWidth = Math.random() * 0.8 + 0.6;
+                        this.lineWidth = RAIN_LINE_WIDTH_MIN + Math.random() * (RAIN_LINE_WIDTH_MAX - RAIN_LINE_WIDTH_MIN);
                     }
                     update() {
                         this.y += this.speed;
@@ -309,18 +341,21 @@
                     update() { this.life -= this.decay; this.x += this.vx; this.y += this.vy; this.vy += 0.08; }
                     draw(ctx) {
                         ctx.fillStyle = `rgba(201,169,97,${this.life * 0.7})`;
-                        ctx.beginPath(); ctx.arc(this.x, this.y, 1.6, 0, Math.PI*2); ctx.fill();
+                        ctx.beginPath(); ctx.arc(this.x, this.y, SPLASH_RADIUS, 0, Math.PI*2); ctx.fill();
                     }
                 }
-                const raindrops = [], splashes = [], MAX_RAIN = 110;
+                const raindrops = [], splashes = [];
 
                 function resize() {
                     width = canvas.width = canvas.offsetWidth;
                     height = canvas.height = canvas.offsetHeight;
+                    updateParameters();
                     groundY = height * 0.72;
+                    if (window.innerWidth <= 900) groundY = height * 0.68; // 移动端倒映面更居中
                     regionCenterX = width / 2;
                     regionCenterY = groundY - CENTER_ABOVE_GROUND;
-                    quoteEl.style.top = (groundY + QUOTE_BELOW_GROUND) + 'px';
+                    quoteEl.style.bottom = (height - groundY - QUOTE_BELOW_GROUND) + 'px';
+                    quoteEl.style.top = 'auto';
                     raindrops.length = 0;
                     for (let i = 0; i < MAX_RAIN; i++) raindrops.push(new RainDrop());
                 }
@@ -419,7 +454,7 @@
                 initLoadingAnimation();
             });
 
-            // ========== 主程序 ==========
+            // ========== 主程序 (同之前完整版) ==========
             let GIST_ID = localStorage.getItem('pkm_gist_id') || '';
             let GIST_TOKEN = localStorage.getItem('pkm_gist_token') || '';
             const SYNC_ENABLED = true;
