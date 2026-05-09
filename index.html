@@ -350,8 +350,12 @@
                     width = canvas.width = canvas.offsetWidth;
                     height = canvas.height = canvas.offsetHeight;
                     updateParameters();
-                    groundY = height * 0.72;
-                    if (window.innerWidth <= 900) groundY = height * 0.68; // 移动端倒映面更居中
+                    if (window.innerWidth <= 900) {
+                        // 移动端整体下移15px
+                        groundY = height * 0.68 + 15;
+                    } else {
+                        groundY = height * 0.72;
+                    }
                     regionCenterX = width / 2;
                     regionCenterY = groundY - CENTER_ABOVE_GROUND;
                     quoteEl.style.bottom = (height - groundY - QUOTE_BELOW_GROUND) + 'px';
