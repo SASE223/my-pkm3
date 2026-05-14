@@ -82,6 +82,7 @@
         .sidebar-panel { flex:1; overflow-y:auto; display:none; flex-direction:column; padding:12px; }
         .sidebar-panel.active { display:flex; }
 
+        /* 纪事子标签 - 确保PC端可见 */
         .notes-subtabs { display:flex; border-bottom:1px solid var(--border); margin-bottom:12px; }
         .notes-subtab { flex:1; padding:8px 4px; text-align:center; cursor:pointer; font-size:12px; color:var(--text3); border-bottom:1px solid transparent; transition:var(--transition); letter-spacing:1px; }
         .notes-subtab:hover, .notes-subtab.active { color:var(--accent); border-bottom-color:var(--accent); }
@@ -224,12 +225,13 @@
             <div class="sidebar-tab" data-panel="panel-gantt-edit">时序</div>
         </div>
         <div class="sidebar-panel active" id="panel-notes">
+            <!-- 纪事子标签 -->
             <div class="notes-subtabs">
                 <div class="notes-subtab active" data-sub="sub-3c">3C</div>
                 <div class="notes-subtab" data-sub="sub-notes">笔记</div>
                 <div class="notes-subtab" data-sub="sub-reviews">复盘</div>
             </div>
-            <div id="sub-3c" class="sub-panel active">
+            <div id="sub-3c" class="sub-panel active" style="display:block;">
                 <div style="display:flex; gap:6px; margin-bottom:8px;">
                     <button class="btn btn-accent" onclick="addProject3C()" style="flex:1;">＋ 新工程</button>
                 </div>
@@ -271,7 +273,7 @@
     </div>
 
     <!-- 弹窗：3C -->
-    <div class="modal-overlay" id="project-3c-modal" style="display:none;"><div class="modal"><h3 id="project-3c-title">编辑工程</h3><input type="text" id="project-3c-name" placeholder="工程名称"><textarea id="project-3c-concentration" placeholder="浓缩点…"></textarea><textarea id="project-3c-capture" placeholder="抓点…"></textarea><div class="btn-row"><button class="btn btn-outline" onclick="closeProject3C()">取消</button><button class="btn btn-accent" onclick="saveProject3C()">保存</button></div></div></div>
+    <div class="modal-overlay" id="project-3c-modal" style="display:none;"><div class="modal"><h3>编辑工程</h3><input type="text" id="project-3c-name" placeholder="工程名称"><textarea id="project-3c-concentration" placeholder="浓缩点…"></textarea><textarea id="project-3c-capture" placeholder="抓点…"></textarea><div class="btn-row"><button class="btn btn-outline" onclick="closeProject3C()">取消</button><button class="btn btn-accent" onclick="saveProject3C()">保存</button></div></div></div>
     <!-- 弹窗：普通笔记 -->
     <div class="modal-overlay" id="note-modal" style="display:none;"><div class="modal"><h3 id="note-modal-title">新建纪事</h3><input type="text" id="note-title-input" placeholder="标题"><div class="tag-list" id="note-type-tags"><span class="tag-chip selected" data-type="note">📜 纪事</span><span class="tag-chip" data-type="code">⌨️ 代码</span></div><textarea id="note-content-input" placeholder="在此书写…"></textarea><input type="text" id="note-tags-input" placeholder="标签（逗号分隔）"><div class="btn-row"><button class="btn btn-outline" onclick="closeNoteEditor()">取消</button><button class="btn btn-accent" onclick="saveNote()">保存</button></div></div></div>
     <!-- 弹窗：复盘 -->
@@ -281,7 +283,7 @@
 
     <script>
         (function(){
-            // ========== 加载动画 Canvas (完整版) ==========
+            // ========== 加载动画 Canvas (完整保留) ==========
             function initLoadingAnimation() {
                 const canvas = document.getElementById('loading-canvas');
                 if (!canvas) return;
@@ -304,96 +306,45 @@
                 function updateParameters() {
                     const isMobile = window.innerWidth <= 900;
                     if (isMobile) {
-                        BIG_RADIUS = 55;
-                        LINE_WIDTH = 3.5;
-                        CENTER_ABOVE_GROUND = 100;
-                        QUOTE_BELOW_GROUND = 25;
-                        MAX_RAIN = 70;
-                        RAIN_LENGTH_MIN = 10;
-                        RAIN_LENGTH_MAX = 22;
-                        RAIN_LINE_WIDTH_MIN = 0.4;
-                        RAIN_LINE_WIDTH_MAX = 0.8;
-                        SPLASH_RADIUS = 1.2;
+                        BIG_RADIUS = 55; LINE_WIDTH = 3.5; CENTER_ABOVE_GROUND = 100; QUOTE_BELOW_GROUND = 25;
+                        MAX_RAIN = 70; RAIN_LENGTH_MIN = 10; RAIN_LENGTH_MAX = 22;
+                        RAIN_LINE_WIDTH_MIN = 0.4; RAIN_LINE_WIDTH_MAX = 0.8; SPLASH_RADIUS = 1.2;
                     } else {
-                        BIG_RADIUS = 80;
-                        LINE_WIDTH = 5;
-                        CENTER_ABOVE_GROUND = 120;
-                        QUOTE_BELOW_GROUND = 30;
-                        MAX_RAIN = 110;
-                        RAIN_LENGTH_MIN = 18;
-                        RAIN_LENGTH_MAX = 40;
-                        RAIN_LINE_WIDTH_MIN = 0.6;
-                        RAIN_LINE_WIDTH_MAX = 1.4;
-                        SPLASH_RADIUS = 1.6;
+                        BIG_RADIUS = 80; LINE_WIDTH = 5; CENTER_ABOVE_GROUND = 120; QUOTE_BELOW_GROUND = 30;
+                        MAX_RAIN = 110; RAIN_LENGTH_MIN = 18; RAIN_LENGTH_MAX = 40;
+                        RAIN_LINE_WIDTH_MIN = 0.6; RAIN_LINE_WIDTH_MAX = 1.4; SPLASH_RADIUS = 1.6;
                     }
-                    GAP = 2 * LINE_WIDTH;
-                    OUTER_R = BIG_RADIUS + GAP / 2;
-                    INNER_R = BIG_RADIUS - GAP / 2;
-                    MID_R = BIG_RADIUS;
+                    GAP = 2 * LINE_WIDTH; OUTER_R = BIG_RADIUS + GAP / 2; INNER_R = BIG_RADIUS - GAP / 2; MID_R = BIG_RADIUS;
                 }
 
-                let animStartTime = null;
-                const CYCLE_DURATION = 3500;
-                let smallMidAngle = 135;
-                let bigGapMidAngle = 135;
+                let animStartTime = null; const CYCLE_DURATION = 3500;
+                let smallMidAngle = 135; let bigGapMidAngle = 135;
 
                 class RainDrop {
                     constructor() { this.reset(true); }
                     reset(init) {
-                        this.x = Math.random() * width;
-                        this.y = init ? Math.random() * height : -30;
+                        this.x = Math.random() * width; this.y = init ? Math.random() * height : -30;
                         this.speed = Math.random() * 5 + 7;
                         this.length = RAIN_LENGTH_MIN + Math.random() * (RAIN_LENGTH_MAX - RAIN_LENGTH_MIN);
                         this.opacity = Math.random() * 0.5 + 0.6;
                         this.lineWidth = RAIN_LINE_WIDTH_MIN + Math.random() * (RAIN_LINE_WIDTH_MAX - RAIN_LINE_WIDTH_MIN);
                     }
-                    update() {
-                        this.y += this.speed;
-                        if (this.y > groundY) {
-                            for (let i = 0; i < 3; i++) splashes.push(new Splash(this.x, groundY));
-                            this.reset();
-                        }
-                    }
-                    draw(ctx) {
-                        ctx.beginPath();
-                        ctx.moveTo(this.x, this.y);
-                        ctx.lineTo(this.x + this.length * 0.1, this.y - this.length);
-                        ctx.strokeStyle = `rgba(232,201,122,${this.opacity})`;
-                        ctx.lineWidth = this.lineWidth;
-                        ctx.stroke();
-                    }
+                    update() { this.y += this.speed; if (this.y > groundY) { for (let i = 0; i < 3; i++) splashes.push(new Splash(this.x, groundY)); this.reset(); } }
+                    draw(ctx) { ctx.beginPath(); ctx.moveTo(this.x, this.y); ctx.lineTo(this.x + this.length * 0.1, this.y - this.length); ctx.strokeStyle = `rgba(232,201,122,${this.opacity})`; ctx.lineWidth = this.lineWidth; ctx.stroke(); }
                 }
                 class Splash {
-                    constructor(x, y) {
-                        this.x = x; this.y = y;
-                        this.vx = (Math.random() - 0.5) * 2.2;
-                        this.vy = -(Math.random() * 3 + 1.8);
-                        this.life = 1;
-                        this.decay = Math.random() * 0.03 + 0.025;
-                    }
+                    constructor(x, y) { this.x = x; this.y = y; this.vx = (Math.random() - 0.5) * 2.2; this.vy = -(Math.random() * 3 + 1.8); this.life = 1; this.decay = Math.random() * 0.03 + 0.025; }
                     update() { this.life -= this.decay; this.x += this.vx; this.y += this.vy; this.vy += 0.08; }
-                    draw(ctx) {
-                        ctx.fillStyle = `rgba(201,169,97,${this.life * 0.7})`;
-                        ctx.beginPath(); ctx.arc(this.x, this.y, SPLASH_RADIUS, 0, Math.PI*2); ctx.fill();
-                    }
+                    draw(ctx) { ctx.fillStyle = `rgba(201,169,97,${this.life * 0.7})`; ctx.beginPath(); ctx.arc(this.x, this.y, SPLASH_RADIUS, 0, Math.PI*2); ctx.fill(); }
                 }
                 const raindrops = [], splashes = [];
 
                 function resize() {
-                    width = canvas.width = canvas.offsetWidth;
-                    height = canvas.height = canvas.offsetHeight;
-                    updateParameters();
-                    if (window.innerWidth <= 900) {
-                        groundY = height * 0.68 + 15;
-                    } else {
-                        groundY = height * 0.72;
-                    }
-                    regionCenterX = width / 2;
-                    regionCenterY = groundY - CENTER_ABOVE_GROUND;
-                    quoteEl.style.bottom = (height - groundY - QUOTE_BELOW_GROUND) + 'px';
-                    quoteEl.style.top = 'auto';
-                    raindrops.length = 0;
-                    for (let i = 0; i < MAX_RAIN; i++) raindrops.push(new RainDrop());
+                    width = canvas.width = canvas.offsetWidth; height = canvas.height = canvas.offsetHeight; updateParameters();
+                    if (window.innerWidth <= 900) groundY = height * 0.68 + 15; else groundY = height * 0.72;
+                    regionCenterX = width / 2; regionCenterY = groundY - CENTER_ABOVE_GROUND;
+                    quoteEl.style.bottom = (height - groundY - QUOTE_BELOW_GROUND) + 'px'; quoteEl.style.top = 'auto';
+                    raindrops.length = 0; for (let i = 0; i < MAX_RAIN; i++) raindrops.push(new RainDrop());
                 }
                 window.addEventListener('resize', resize);
 
@@ -405,314 +356,109 @@
                     else if (elapsed < 1500) { let t = twoPhaseEase((elapsed-1000)/500); bigGapMidAngle = 135 - t*180; smallMidAngle = 315; }
                     else if (elapsed < 2500) { let t = twoPhaseEase((elapsed-1500)/1000); smallMidAngle = 315 + t*180; bigGapMidAngle = 315; }
                     else { let t = twoPhaseEase((elapsed-2500)/1000); bigGapMidAngle = 315 - t*180; smallMidAngle = 495; }
-                    smallMidAngle = ((smallMidAngle % 360) + 360) % 360;
-                    bigGapMidAngle = ((bigGapMidAngle % 360) + 360) % 360;
+                    smallMidAngle = ((smallMidAngle % 360) + 360) % 360; bigGapMidAngle = ((bigGapMidAngle % 360) + 360) % 360;
                 }
 
                 function drawArcsAtOrigin(opacity, shadow) {
-                    ctx.save();
-                    ctx.lineWidth = LINE_WIDTH;
-                    ctx.lineCap = 'butt';
-                    if (shadow) { ctx.shadowBlur = 10; ctx.shadowColor = 'rgba(201,169,97,0.7)'; }
-                    else { ctx.shadowBlur = 0; ctx.shadowColor = 'transparent'; }
-                    const gapStart = bigGapMidAngle - BIG_ARC_GAP_DEG/2;
-                    const gapEnd = bigGapMidAngle + BIG_ARC_GAP_DEG/2;
-                    function drawBig(radius, color) {
-                        ctx.beginPath();
-                        ctx.arc(0, 0, radius, (gapEnd*Math.PI)/180, ((gapStart+360)*Math.PI)/180);
-                        ctx.strokeStyle = color;
-                        ctx.stroke();
-                    }
-                    drawBig(OUTER_R, `rgba(201,169,97,${opacity})`);
-                    drawBig(INNER_R, `rgba(201,169,97,${opacity})`);
-                    const half = SMALL_ARC_DEG/2;
-                    let ss = smallMidAngle - half, se = smallMidAngle + half;
-                    ctx.beginPath();
-                    ctx.arc(0, 0, MID_R, (ss*Math.PI)/180, (se*Math.PI)/180);
-                    ctx.strokeStyle = `rgba(232,201,122,${opacity})`;
-                    ctx.stroke();
+                    ctx.save(); ctx.lineWidth = LINE_WIDTH; ctx.lineCap = 'butt';
+                    if (shadow) { ctx.shadowBlur = 10; ctx.shadowColor = 'rgba(201,169,97,0.7)'; } else { ctx.shadowBlur = 0; ctx.shadowColor = 'transparent'; }
+                    const gapStart = bigGapMidAngle - BIG_ARC_GAP_DEG/2; const gapEnd = bigGapMidAngle + BIG_ARC_GAP_DEG/2;
+                    function drawBig(radius, color) { ctx.beginPath(); ctx.arc(0,0,radius, (gapEnd*Math.PI)/180, ((gapStart+360)*Math.PI)/180); ctx.strokeStyle=color; ctx.stroke(); }
+                    drawBig(OUTER_R, `rgba(201,169,97,${opacity})`); drawBig(INNER_R, `rgba(201,169,97,${opacity})`);
+                    const half=SMALL_ARC_DEG/2; let ss=smallMidAngle-half, se=smallMidAngle+half;
+                    ctx.beginPath(); ctx.arc(0,0,MID_R, (ss*Math.PI)/180, (se*Math.PI)/180); ctx.strokeStyle=`rgba(232,201,122,${opacity})`; ctx.stroke();
                     ctx.restore();
                 }
-
-                function drawArcs(opacity = 1.0) {
-                    ctx.save();
-                    ctx.translate(regionCenterX, regionCenterY);
-                    drawArcsAtOrigin(opacity, true);
-                    ctx.restore();
-                }
+                function drawArcs(opacity=1.0) { ctx.save(); ctx.translate(regionCenterX, regionCenterY); drawArcsAtOrigin(opacity, true); ctx.restore(); }
                 function drawReflection() {
-                    ctx.save();
-                    ctx.translate(regionCenterX, groundY);
-                    ctx.scale(1, -0.5);
-                    ctx.translate(0, -CENTER_ABOVE_GROUND);
-                    ctx.globalAlpha = 0.45;
-                    drawArcsAtOrigin(0.65, false);
-                    ctx.globalAlpha = 1;
-                    ctx.restore();
+                    ctx.save(); ctx.translate(regionCenterX, groundY); ctx.scale(1, -0.5); ctx.translate(0, -CENTER_ABOVE_GROUND); ctx.globalAlpha=0.45;
+                    drawArcsAtOrigin(0.65, false); ctx.globalAlpha=1; ctx.restore();
                 }
-                function drawGroundLine() {
-                    ctx.beginPath();
-                    ctx.moveTo(0, groundY); ctx.lineTo(width, groundY);
-                    ctx.strokeStyle = 'rgba(201,169,97,0.25)';
-                    ctx.lineWidth = 0.7; ctx.stroke();
-                }
+                function drawGroundLine() { ctx.beginPath(); ctx.moveTo(0,groundY); ctx.lineTo(width,groundY); ctx.strokeStyle='rgba(201,169,97,0.25)'; ctx.lineWidth=0.7; ctx.stroke(); }
 
                 function animate(now) {
                     if (!width || !height) resize();
-                    ctx.clearRect(0, 0, width, height);
-                    const bgGrad = ctx.createRadialGradient(regionCenterX, regionCenterY, 20, regionCenterX, regionCenterY, 420);
-                    bgGrad.addColorStop(0, 'rgba(201,169,97,0.06)');
-                    bgGrad.addColorStop(1, 'rgba(26,23,20,0)');
-                    ctx.fillStyle = bgGrad;
-                    ctx.fillRect(0, 0, width, height);
-                    updateAngles(now);
-                    drawReflection();
-                    drawGroundLine();
-                    drawArcs(1.0);
-                    raindrops.forEach(d => { d.update(); d.draw(ctx); });
-                    for (let i = splashes.length-1; i >= 0; i--) {
-                        splashes[i].update(); splashes[i].draw(ctx);
-                        if (splashes[i].life <= 0) splashes.splice(i,1);
-                    }
+                    ctx.clearRect(0,0,width,height); const bgGrad=ctx.createRadialGradient(regionCenterX,regionCenterY,20,regionCenterX,regionCenterY,420); bgGrad.addColorStop(0,'rgba(201,169,97,0.06)'); bgGrad.addColorStop(1,'rgba(26,23,20,0)'); ctx.fillStyle=bgGrad; ctx.fillRect(0,0,width,height);
+                    updateAngles(now); drawReflection(); drawGroundLine(); drawArcs(1.0);
+                    raindrops.forEach(d=>{d.update(); d.draw(ctx);});
+                    for(let i=splashes.length-1;i>=0;i--){ splashes[i].update(); splashes[i].draw(ctx); if(splashes[i].life<=0) splashes.splice(i,1); }
                     requestAnimationFrame(animate);
                 }
-                resize();
-                requestAnimationFrame(animate);
+                resize(); requestAnimationFrame(animate);
             }
-
             window.addEventListener('load', () => initLoadingAnimation());
 
             // ========== 主程序 ==========
             let GIST_ID = localStorage.getItem('pkm_gist_id') || '';
             let GIST_TOKEN = localStorage.getItem('pkm_gist_token') || '';
-            const SYNC_ENABLED = true;
-            const STORAGE_KEY = 'pkm_app_data_v2';
-            const SETTINGS_KEY = 'pkm_app_settings_v3';
-            
-            function getDefaultData() { return { 
-                notes: [], todos: [], dailyTodos: {}, reviews: {}, habits: [], 
-                ganttProjects: [], activeGanttProjectId: null,
-                projects3C: []
-            }; }
+            const SYNC_ENABLED = true; const STORAGE_KEY = 'pkm_app_data_v2'; const SETTINGS_KEY = 'pkm_app_settings_v3';
+            function getDefaultData() { return { notes: [], todos: [], dailyTodos: {}, reviews: {}, habits: [], ganttProjects: [], activeGanttProjectId: null, projects3C: [] }; }
             function loadLocalData() { try { const raw = localStorage.getItem(STORAGE_KEY); if (raw) return Object.assign(getDefaultData(), JSON.parse(raw)); } catch(e) {} return getDefaultData(); }
             function saveLocalData(data) { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }
             async function fetchFromGist() { if (!SYNC_ENABLED || !GIST_ID || !GIST_TOKEN) return null; try { const res = await fetch(`https://api.github.com/gists/${GIST_ID}`, { headers: { Authorization: `token ${GIST_TOKEN}` } }); if (!res.ok) throw new Error(); const gist = await res.json(); const file = gist.files['pkm_data.json']; if (file && file.content) return Object.assign(getDefaultData(), JSON.parse(file.content)); } catch(e) { return null; } }
             async function pushToGist(data) { if (!SYNC_ENABLED || !GIST_ID || !GIST_TOKEN) return; try { await fetch(`https://api.github.com/gists/${GIST_ID}`, { method: 'PATCH', headers: { Authorization: `token ${GIST_TOKEN}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ files: { 'pkm_data.json': { content: JSON.stringify(data,null,2) } } }) }); } catch(e) {} }
-            
+
             let appData = loadLocalData();
             let appSettings = (()=>{ try { const raw = localStorage.getItem(SETTINGS_KEY); if (raw) return JSON.parse(raw); } catch(e) {} return { reminderType:'none', randomInterval:30, habitReminderTime:'09:00', theme:'dark' }; })();
             function saveSettings(s) { localStorage.setItem(SETTINGS_KEY, JSON.stringify(s)); }
             let currentDate = new Date().toISOString().split('T')[0];
             let sidebarNoteFilterDate = null;
-            
+
             const loadingVeil = document.getElementById('loading-veil');
             const setupModal = document.getElementById('setup-modal');
             const noteModal = document.getElementById('note-modal');
             const reviewModal = document.getElementById('review-modal');
             const project3cModal = document.getElementById('project-3c-modal');
-            
-            const loadingPhrases = {
-                init: ["归拢时序，拂去尘埃……", "司辰，书页正在展开。", "拾取记忆的碎屑……", "校准齿轮，重置沙漏。"],
-                sync: ["正从星尘中取回残响……", "链接「箱子」深处……", "风中有银芯的味道。", "逆写时光，请稍候。"],
-                offline: ["烛火已燃，离线书写。", "无需外界，手记自存。", "孤页亦可成卷。", "独行于时序回廊。"]
-            };
+
+            const loadingPhrases = { init: ["归拢时序，拂去尘埃……", "司辰，书页正在展开。", "拾取记忆的碎屑……", "校准齿轮，重置沙漏。"], sync: ["正从星尘中取回残响……", "链接「箱子」深处……", "风中有银芯的味道。", "逆写时光，请稍候。"], offline: ["烛火已燃，离线书写。", "无需外界，手记自存。", "孤页亦可成卷。", "独行于时序回廊。"] };
             let loadingInterval = null;
-            function startLoadingAnim(phase = 'init') {
-                if(loadingInterval) clearInterval(loadingInterval);
-                let messages = loadingPhrases[phase] || loadingPhrases.init;
-                let idx = 0;
-                document.getElementById('loading-quote-text').textContent = messages[0];
-                loadingInterval = setInterval(() => {
-                    idx = (idx + 1) % messages.length;
-                    document.getElementById('loading-quote-text').textContent = messages[idx];
-                }, 1800);
-                loadingVeil.classList.remove('hide');
-                loadingVeil.style.display = 'flex';
-                window.dispatchEvent(new Event('resize'));
-            }
-            function stopLoadingAndHide() {
-                if(loadingInterval) clearInterval(loadingInterval);
-                loadingVeil.classList.add('hide');
-                setTimeout(()=>{ if(loadingVeil) loadingVeil.style.display = 'none'; }, 450);
-            }
-            function forceHideLoading() {
-                if(loadingInterval) clearInterval(loadingInterval);
-                loadingVeil.classList.add('hide');
-                loadingVeil.style.display = 'none';
-            }
-            
+            function startLoadingAnim(phase='init') { if(loadingInterval) clearInterval(loadingInterval); let messages=loadingPhrases[phase]||loadingPhrases.init; let idx=0; document.getElementById('loading-quote-text').textContent=messages[0]; loadingInterval=setInterval(()=>{ idx=(idx+1)%messages.length; document.getElementById('loading-quote-text').textContent=messages[idx]; },1800); loadingVeil.classList.remove('hide'); loadingVeil.style.display='flex'; window.dispatchEvent(new Event('resize')); }
+            function stopLoadingAndHide() { if(loadingInterval) clearInterval(loadingInterval); loadingVeil.classList.add('hide'); setTimeout(()=>{ if(loadingVeil) loadingVeil.style.display='none'; },450); }
+            function forceHideLoading() { if(loadingInterval) clearInterval(loadingInterval); loadingVeil.classList.add('hide'); loadingVeil.style.display='none'; }
+
             function saveData(data) { appData = data; saveLocalData(data); pushToGist(data); refreshAllUI(); }
             const genId=()=>'id_'+Date.now()+'_'+Math.random().toString(36).substr(2,7);
             const getToday=()=>new Date().toISOString().split('T')[0];
             function formatDate(d){ if(!d)return ''; const dt=new Date(d+'T00:00:00'); return dt.toLocaleDateString('zh-CN',{month:'short',day:'numeric',weekday:'short'}); }
             function showToast(msg){ const t=document.createElement('div'); t.className='toast'; t.textContent=msg; document.body.appendChild(t); setTimeout(()=>t.remove(),2500); }
             function escapeHtml(s){ const d=document.createElement('div'); d.textContent=s; return d.innerHTML; }
-            
+
             function applyTheme() { const html=document.documentElement; if (appSettings.theme==='light') { html.setAttribute('data-theme','light'); document.getElementById('page-title').textContent='Hypomnema'; } else { html.removeAttribute('data-theme'); document.getElementById('page-title').textContent='Reverse Chronicle'; } }
             document.getElementById('theme-toggle').addEventListener('click',()=>{ appSettings.theme=appSettings.theme==='dark'?'light':'dark'; applyTheme(); saveSettings(appSettings); });
-            
-            // ========== 3C 工程 ==========
-            function addProject3C() {
-                if (appData.projects3C.length >= 15) { showToast('工程已达上限（15个）'); return; }
-                appData.projects3C.push({ id: genId(), name: '新工程', concentration: '', capture: '' });
-                saveData(appData);
-                renderProjects3C();
-            }
-            function deleteProject3C(id) {
-                appData.projects3C = appData.projects3C.filter(p => p.id !== id);
-                saveData(appData);
-                renderProjects3C();
-            }
+
+            // 3C 工程
+            function addProject3C() { if (appData.projects3C.length >= 15) { showToast('工程已达上限（15个）'); return; } appData.projects3C.push({ id: genId(), name: '新工程', concentration: '', capture: '' }); saveData(appData); renderProjects3C(); }
+            function deleteProject3C(id) { appData.projects3C = appData.projects3C.filter(p => p.id !== id); saveData(appData); renderProjects3C(); }
             let editingProject3cId = null;
-            function openProject3C(id) {
-                const p = appData.projects3C.find(p => p.id === id);
-                if (!p) return;
-                editingProject3cId = id;
-                document.getElementById('project-3c-name').value = p.name;
-                document.getElementById('project-3c-concentration').value = p.concentration || '';
-                document.getElementById('project-3c-capture').value = p.capture || '';
-                project3cModal.style.display = 'flex';
-            }
+            function openProject3C(id) { const p = appData.projects3C.find(p => p.id === id); if (!p) return; editingProject3cId = id; document.getElementById('project-3c-name').value = p.name; document.getElementById('project-3c-concentration').value = p.concentration || ''; document.getElementById('project-3c-capture').value = p.capture || ''; project3cModal.style.display = 'flex'; }
             function closeProject3C() { project3cModal.style.display = 'none'; editingProject3cId = null; }
-            function saveProject3C() {
-                if (!editingProject3cId) return;
-                const p = appData.projects3C.find(p => p.id === editingProject3cId);
-                if (!p) return;
-                p.name = document.getElementById('project-3c-name').value.trim() || '未命名工程';
-                p.concentration = document.getElementById('project-3c-concentration').value;
-                p.capture = document.getElementById('project-3c-capture').value;
-                saveData(appData);
-                closeProject3C();
-                renderProjects3C();
-            }
-            function renderProjects3C() {
-                const container = document.getElementById('projects-3c-list');
-                if (!appData.projects3C.length) {
-                    container.innerHTML = '<div style="padding:20px;color:var(--text3);text-align:center;">尚无工程，点击上方按钮添加</div>';
-                    return;
-                }
-                container.innerHTML = appData.projects3C.map(p => `
-                    <div class="project-item" onclick="openProject3C('${p.id}')">
-                        <span class="project-title">${escapeHtml(p.name)}</span>
-                        <span class="project-del" onclick="event.stopPropagation();deleteProject3C('${p.id}')">✕</span>
-                    </div>
-                `).join('');
-            }
-            
-            // ========== 普通笔记 ==========
-            function renderNotesList(filter=''){ 
-                let notes = appData.notes.filter(n => n.type !== 'review');
-                if (sidebarNoteFilterDate) notes = notes.filter(n => n.date === sidebarNoteFilterDate);
-                if (filter) notes = notes.filter(n => (n.title||'').includes(filter) || (n.content||'').includes(filter));
-                notes.sort((a,b)=>new Date(b.updatedAt||b.createdAt)-new Date(a.updatedAt||a.createdAt));
-                const c = document.getElementById('notes-list');
-                if (!notes.length) {
-                    c.innerHTML = '<div style="padding:32px;text-align:center;color:var(--text3);">' + (sidebarNoteFilterDate ? '此日无纪事' : '尚无纪事') + '</div>';
-                    return;
-                }
-                c.innerHTML = notes.map(n=>`<div class="note-item" onclick="openNoteEditor('${n.id}')"><span class="note-title">${escapeHtml(n.title||'无题')}</span><span class="note-badges"><span class="badge">${n.type==='code'?'代码':'纪事'}</span></span><span class="note-del" onclick="event.stopPropagation();deleteNote('${n.id}')">✕</span></div>`).join('');
-                const tag = document.getElementById('date-filter-tag');
-                if (sidebarNoteFilterDate) {
-                    tag.style.display = 'inline-flex';
-                    tag.innerHTML = `📅 ${formatDate(sidebarNoteFilterDate)} <span class="clear-filter" onclick="clearSidebarDateFilter()">✕</span>`;
-                } else tag.style.display = 'none';
-            }
+            function saveProject3C() { if (!editingProject3cId) return; const p = appData.projects3C.find(p => p.id === editingProject3cId); if (!p) return; p.name = document.getElementById('project-3c-name').value.trim() || '未命名工程'; p.concentration = document.getElementById('project-3c-concentration').value; p.capture = document.getElementById('project-3c-capture').value; saveData(appData); closeProject3C(); renderProjects3C(); }
+            function renderProjects3C() { const container = document.getElementById('projects-3c-list'); if (!appData.projects3C.length) { container.innerHTML = '<div style="padding:20px;color:var(--text3);text-align:center;">尚无工程，点击上方按钮添加</div>'; return; } container.innerHTML = appData.projects3C.map(p => `<div class="project-item" onclick="openProject3C('${p.id}')"><span class="project-title">${escapeHtml(p.name)}</span><span class="project-del" onclick="event.stopPropagation();deleteProject3C('${p.id}')">✕</span></div>`).join(''); }
+
+            // 笔记
+            function renderNotesList(filter=''){ let notes = appData.notes.filter(n => n.type !== 'review'); if (sidebarNoteFilterDate) notes = notes.filter(n => n.date === sidebarNoteFilterDate); if (filter) notes = notes.filter(n => (n.title||'').includes(filter) || (n.content||'').includes(filter)); notes.sort((a,b)=>new Date(b.updatedAt||b.createdAt)-new Date(a.updatedAt||a.createdAt)); const c = document.getElementById('notes-list'); if (!notes.length) { c.innerHTML = '<div style="padding:32px;text-align:center;color:var(--text3);">' + (sidebarNoteFilterDate ? '此日无纪事' : '尚无纪事') + '</div>'; return; } c.innerHTML = notes.map(n=>`<div class="note-item" onclick="openNoteEditor('${n.id}')"><span class="note-title">${escapeHtml(n.title||'无题')}</span><span class="note-badges"><span class="badge">${n.type==='code'?'代码':'纪事'}</span></span><span class="note-del" onclick="event.stopPropagation();deleteNote('${n.id}')">✕</span></div>`).join(''); const tag = document.getElementById('date-filter-tag'); if (sidebarNoteFilterDate) { tag.style.display = 'inline-flex'; tag.innerHTML = `📅 ${formatDate(sidebarNoteFilterDate)} <span class="clear-filter" onclick="clearSidebarDateFilter()">✕</span>`; } else tag.style.display = 'none'; }
             window.clearSidebarDateFilter = function() { sidebarNoteFilterDate = null; renderNotesList(); };
             let editingNoteId=null;
-            function openNoteEditor(id=null){ 
-                editingNoteId=id; 
-                if(id){ 
-                    const n=appData.notes.find(n=>n.id===id); 
-                    if(!n)return; 
-                    document.getElementById('note-modal-title').textContent='编辑纪事'; 
-                    document.getElementById('note-title-input').value=n.title||''; 
-                    document.getElementById('note-content-input').value=n.content||''; 
-                    document.getElementById('note-tags-input').value=(n.tags||[]).join(','); 
-                    document.querySelectorAll('#note-type-tags .tag-chip').forEach(c=>c.classList.toggle('selected',c.dataset.type===n.type)); 
-                }else{ 
-                    document.getElementById('note-modal-title').textContent='新建纪事'; 
-                    document.getElementById('note-title-input').value=''; 
-                    document.getElementById('note-content-input').value=''; 
-                    document.getElementById('note-tags-input').value=''; 
-                    document.querySelectorAll('#note-type-tags .tag-chip').forEach(c=>c.classList.toggle('selected',c.dataset.type==='note')); 
-                } 
-                noteModal.style.display='flex'; 
-            }
+            function openNoteEditor(id=null){ editingNoteId=id; if(id){ const n=appData.notes.find(n=>n.id===id); if(!n)return; document.getElementById('note-modal-title').textContent='编辑纪事'; document.getElementById('note-title-input').value=n.title||''; document.getElementById('note-content-input').value=n.content||''; document.getElementById('note-tags-input').value=(n.tags||[]).join(','); document.querySelectorAll('#note-type-tags .tag-chip').forEach(c=>c.classList.toggle('selected',c.dataset.type===n.type)); }else{ document.getElementById('note-modal-title').textContent='新建纪事'; document.getElementById('note-title-input').value=''; document.getElementById('note-content-input').value=''; document.getElementById('note-tags-input').value=''; document.querySelectorAll('#note-type-tags .tag-chip').forEach(c=>c.classList.toggle('selected',c.dataset.type==='note')); } noteModal.style.display='flex'; }
             function closeNoteEditor(){ noteModal.style.display='none'; }
-            function saveNote(){ 
-                const title=document.getElementById('note-title-input').value.trim(), content=document.getElementById('note-content-input').value; 
-                const tags=document.getElementById('note-tags-input').value.split(',').map(t=>t.trim()).filter(Boolean); 
-                const type=document.querySelector('#note-type-tags .tag-chip.selected').dataset.type; 
-                if(!title&&!content){showToast('请填写内容');return;} 
-                const now=new Date().toISOString(); 
-                if(editingNoteId){ 
-                    const n=appData.notes.find(n=>n.id===editingNoteId); 
-                    if(n){ n.title=title; n.content=content; n.tags=tags; n.type=type; n.updatedAt=now; n.date=n.date||currentDate; } 
-                } else appData.notes.unshift({id:genId(),title,content,type,tags,createdAt:now,updatedAt:now,date:currentDate}); 
-                saveData(appData); closeNoteEditor(); renderNotesList(); renderCalendarWidget(); renderDatePanel(); 
-            }
+            function saveNote(){ const title=document.getElementById('note-title-input').value.trim(), content=document.getElementById('note-content-input').value; const tags=document.getElementById('note-tags-input').value.split(',').map(t=>t.trim()).filter(Boolean); const type=document.querySelector('#note-type-tags .tag-chip.selected').dataset.type; if(!title&&!content){showToast('请填写内容');return;} const now=new Date().toISOString(); if(editingNoteId){ const n=appData.notes.find(n=>n.id===editingNoteId); if(n){ n.title=title; n.content=content; n.tags=tags; n.type=type; n.updatedAt=now; n.date=n.date||currentDate; } } else appData.notes.unshift({id:genId(),title,content,type,tags,createdAt:now,updatedAt:now,date:currentDate}); saveData(appData); closeNoteEditor(); renderNotesList(); renderCalendarWidget(); renderDatePanel(); }
             function deleteNote(id){ if(!confirm('删除？'))return; appData.notes=appData.notes.filter(n=>n.id!==id); saveData(appData); renderNotesList(); renderCalendarWidget(); renderDatePanel(); }
             document.getElementById('note-search').addEventListener('input',e=>renderNotesList(e.target.value));
             document.getElementById('note-type-tags').addEventListener('click',e=>{ if(e.target.classList.contains('tag-chip')){ document.querySelectorAll('#note-type-tags .tag-chip').forEach(c=>c.classList.remove('selected')); e.target.classList.add('selected'); } });
             noteModal.addEventListener('click',e=>{ if(e.target===noteModal) closeNoteEditor(); });
 
-            // ========== 复盘 ==========
-            function renderReviewList() {
-                const reviews = appData.notes.filter(n => n.type === 'review').sort((a,b)=>new Date(b.updatedAt||b.createdAt)-new Date(a.updatedAt||a.createdAt));
-                const container = document.getElementById('review-list');
-                if (!reviews.length) {
-                    container.innerHTML = '<div style="padding:20px;color:var(--text3);text-align:center;">暂无复盘记录</div>';
-                    return;
-                }
-                container.innerHTML = reviews.map(n => `
-                    <div class="review-item" onclick="openNoteEditor('${n.id}')">
-                        <span class="review-title">${escapeHtml(n.title||'复盘')} <span class="badge">复盘</span></span>
-                        <span class="review-del" onclick="event.stopPropagation();deleteNote('${n.id}')">✕</span>
-                    </div>
-                `).join('');
-            }
-            function openReviewModal(){
-                document.getElementById('review-date-label').textContent = formatDate(currentDate);
-                document.getElementById('review-goal').value = '';
-                document.getElementById('review-experience').value = '';
-                document.getElementById('review-problem').value = '';
-                document.getElementById('review-change').value = '';
-                renderHabitChecks(currentDate);
-                reviewModal.style.display = 'flex';
-            }
+            // 复盘
+            function renderReviewList() { const reviews = appData.notes.filter(n => n.type === 'review').sort((a,b)=>new Date(b.updatedAt||b.createdAt)-new Date(a.updatedAt||a.createdAt)); const container = document.getElementById('review-list'); if (!reviews.length) { container.innerHTML = '<div style="padding:20px;color:var(--text3);text-align:center;">暂无复盘记录</div>'; return; } container.innerHTML = reviews.map(n => `<div class="review-item" onclick="openNoteEditor('${n.id}')"><span class="review-title">${escapeHtml(n.title||'复盘')} <span class="badge">复盘</span></span><span class="review-del" onclick="event.stopPropagation();deleteNote('${n.id}')">✕</span></div>`).join(''); }
+            function openReviewModal(){ document.getElementById('review-date-label').textContent = formatDate(currentDate); document.getElementById('review-goal').value = ''; document.getElementById('review-experience').value = ''; document.getElementById('review-problem').value = ''; document.getElementById('review-change').value = ''; renderHabitChecks(currentDate); reviewModal.style.display = 'flex'; }
             function closeReviewModal(){ reviewModal.style.display = 'none'; }
-            function renderHabitChecks(date){ 
-                const r=appData.reviews[date]||{}; 
-                document.getElementById('habit-check-list').innerHTML=appData.habits.map(h=>`<div class="habit-check-row"><input type="checkbox" data-habit="${escapeHtml(h.name)}" ${r.habits&&r.habits[h.name]?'checked':''}><span>${escapeHtml(h.name)}</span><span style="margin-left:auto;cursor:pointer;color:#8B0000;opacity:0.6;" onclick="deleteHabit('${h.id}')">✕</span></div>`).join('')||'<div>无可循习惯</div>'; 
-            }
+            function renderHabitChecks(date){ const r=appData.reviews[date]||{}; document.getElementById('habit-check-list').innerHTML=appData.habits.map(h=>`<div class="habit-check-row"><input type="checkbox" data-habit="${escapeHtml(h.name)}" ${r.habits&&r.habits[h.name]?'checked':''}><span>${escapeHtml(h.name)}</span><span style="margin-left:auto;cursor:pointer;color:#8B0000;opacity:0.6;" onclick="deleteHabit('${h.id}')">✕</span></div>`).join('')||'<div>无可循习惯</div>'; }
             function addHabitPrompt(){ const n=prompt('习惯之名：'); if(n&&n.trim()){ if(appData.habits.some(h=>h.name===n.trim()))return; appData.habits.push({id:genId(),name:n.trim()}); saveData(appData); renderHabitChecks(currentDate); } }
             function deleteHabit(id){ if(!confirm('抹除习惯？'))return; appData.habits=appData.habits.filter(h=>h.id!==id); saveData(appData); renderHabitChecks(currentDate); }
-            function saveReview(){ 
-                const goal = document.getElementById('review-goal').value;
-                const experience = document.getElementById('review-experience').value;
-                const problem = document.getElementById('review-problem').value;
-                const change = document.getElementById('review-change').value;
-                const habits = {}; 
-                document.querySelectorAll('#habit-check-list input').forEach(cb=>habits[cb.dataset.habit]=cb.checked); 
-                appData.reviews[currentDate]={content:'', habits, createdAt:new Date().toISOString()}; 
-                const fullContent = `# 复盘 ${currentDate}\n\n## 目标\n${goal}\n\n## 经历\n${experience}\n\n## 问题\n${problem}\n\n## 改变\n${change}`;
-                const exist=appData.notes.find(n=>n.type==='review'&&n.date===currentDate);
-                if(exist){ exist.content=fullContent; exist.updatedAt=new Date().toISOString(); } 
-                else appData.notes.unshift({id:genId(),title:`复盘 ${currentDate}`,content:fullContent,type:'review',tags:[],createdAt:new Date().toISOString(),updatedAt:new Date().toISOString(),date:currentDate});
-                saveData(appData); closeReviewModal(); renderReviewList(); renderDatePanel(); renderCalendarWidget(); 
-            }
+            function saveReview(){ const goal = document.getElementById('review-goal').value; const experience = document.getElementById('review-experience').value; const problem = document.getElementById('review-problem').value; const change = document.getElementById('review-change').value; const habits = {}; document.querySelectorAll('#habit-check-list input').forEach(cb=>habits[cb.dataset.habit]=cb.checked); appData.reviews[currentDate]={content:'', habits, createdAt:new Date().toISOString()}; const fullContent = `# 复盘 ${currentDate}\n\n## 目标\n${goal}\n\n## 经历\n${experience}\n\n## 问题\n${problem}\n\n## 改变\n${change}`; const exist=appData.notes.find(n=>n.type==='review'&&n.date===currentDate); if(exist){ exist.content=fullContent; exist.updatedAt=new Date().toISOString(); } else appData.notes.unshift({id:genId(),title:`复盘 ${currentDate}`,content:fullContent,type:'review',tags:[],createdAt:new Date().toISOString(),updatedAt:new Date().toISOString(),date:currentDate}); saveData(appData); closeReviewModal(); renderReviewList(); renderDatePanel(); renderCalendarWidget(); }
             reviewModal.addEventListener('click',e=>{ if(e.target===reviewModal) closeReviewModal(); });
-            
-            // ========== 待办、日历、甘特图等（完整实现） ==========
-            function renderDatePanel() {
-                const today = getToday();
-                document.getElementById('date-title-text').textContent = (currentDate === today) ? '☉ 今日残片' : '☉ 择日残片';
-                document.getElementById('selected-date-label').textContent = formatDate(currentDate);
-                const daily = appData.dailyTodos[currentDate] || [];
-                document.getElementById('daily-todo-list').innerHTML = daily.map((t,i)=>`<div class="todo-item"><div class="todo-checkbox${t.completed?' done':''}" onclick="toggleDailyTodo(${i})">${t.completed?'✔':''}</div><span class="todo-text${t.completed?' done':''}">${escapeHtml(t.title)}</span><span class="todo-priority priority-${t.priority||'mid'}"></span><span class="todo-del" onclick="deleteDailyTodo(${i})">✕</span></div>`).join('') || '<div style="padding:20px;color:var(--text3);">此日未镌刻任务</div>';
-                const relatedNotes = appData.notes.filter(n => n.date === currentDate && n.type !== 'review').sort((a,b)=>new Date(b.updatedAt||b.createdAt)-new Date(a.updatedAt||a.createdAt));
-                document.getElementById('date-related-notes').innerHTML = relatedNotes.map(n=>`<div class="note-preview-item" onclick="openNoteEditor('${n.id}')"><div class="note-preview-title">${escapeHtml(n.title||'无题')} <span class="badge">${n.type==='code'?'代码':'纪事'}</span></div><div class="note-preview-meta">${(n.content||'').substring(0,60)}${(n.content||'').length>60?'…':''}</div></div>`).join('') || '<div style="color:var(--text3);padding:8px;">尚无笔迹落于此日</div>';
-            }
+
+            // 待办、日历、甘特图等 (完整)
+            function renderDatePanel() { const today=getToday(); document.getElementById('date-title-text').textContent = (currentDate===today)?'☉ 今日残片':'☉ 择日残片'; document.getElementById('selected-date-label').textContent=formatDate(currentDate); const daily=appData.dailyTodos[currentDate]||[]; document.getElementById('daily-todo-list').innerHTML = daily.map((t,i)=>`<div class="todo-item"><div class="todo-checkbox${t.completed?' done':''}" onclick="toggleDailyTodo(${i})">${t.completed?'✔':''}</div><span class="todo-text${t.completed?' done':''}">${escapeHtml(t.title)}</span><span class="todo-priority priority-${t.priority||'mid'}"></span><span class="todo-del" onclick="deleteDailyTodo(${i})">✕</span></div>`).join('') || '<div style="padding:20px;color:var(--text3);">此日未镌刻任务</div>'; const relatedNotes = appData.notes.filter(n => n.date === currentDate && n.type !== 'review').sort((a,b)=>new Date(b.updatedAt||b.createdAt)-new Date(a.updatedAt||a.createdAt)); document.getElementById('date-related-notes').innerHTML = relatedNotes.map(n=>`<div class="note-preview-item" onclick="openNoteEditor('${n.id}')"><div class="note-preview-title">${escapeHtml(n.title||'无题')} <span class="badge">${n.type==='code'?'代码':'纪事'}</span></div><div class="note-preview-meta">${(n.content||'').substring(0,60)}${(n.content||'').length>60?'…':''}</div></div>`).join('') || '<div style="color:var(--text3);padding:8px;">尚无笔迹落于此日</div>'; }
             function addDailyTodo(){ const t=document.getElementById('daily-todo-input').value.trim(); if(!t)return; if(!appData.dailyTodos[currentDate]) appData.dailyTodos[currentDate]=[]; appData.dailyTodos[currentDate].push({id:genId(),title:t,completed:false,priority:document.getElementById('daily-todo-priority').value}); document.getElementById('daily-todo-input').value=''; saveData(appData); renderDatePanel(); renderCalendarWidget(); }
             function toggleDailyTodo(i){ if(appData.dailyTodos[currentDate]?.[i]){ appData.dailyTodos[currentDate][i].completed=!appData.dailyTodos[currentDate][i].completed; saveData(appData); renderDatePanel(); } }
             function deleteDailyTodo(i){ if(appData.dailyTodos[currentDate]){ appData.dailyTodos[currentDate].splice(i,1); if(!appData.dailyTodos[currentDate].length) delete appData.dailyTodos[currentDate]; saveData(appData); renderDatePanel(); renderCalendarWidget(); } }
@@ -721,14 +467,13 @@
             function toggleTodo(id){ const t=appData.todos.find(t=>t.id===id); if(t){t.completed=!t.completed; saveData(appData); renderTodos();} }
             function deleteTodo(id){ appData.todos=appData.todos.filter(t=>t.id!==id); saveData(appData); renderTodos(); }
 
-            // 日历
             let calYear,calMonth;
             function renderCalendarWidget(){ const n=new Date(); calYear=n.getFullYear(); calMonth=n.getMonth(); renderCalAt(calYear,calMonth); }
             function renderCalAt(y,m){ const monthNames=['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月']; const daysInMonth=new Date(y,m+1,0).getDate(); const firstDay=new Date(y,m,1).getDay(); const today=getToday(); const markedDates=new Set(); appData.notes.forEach(n=>{ const d=(n.date||n.createdAt||'').split('T')[0]; if(d)markedDates.add(d); }); Object.keys(appData.reviews).forEach(d=>markedDates.add(d)); Object.keys(appData.dailyTodos).forEach(d=>{ if(appData.dailyTodos[d]?.length)markedDates.add(d); }); let html=`<div class="cal-header"><button onclick="navigateCal(-1)">◀</button><span class="cal-month-label">${y}年 ${monthNames[m]}</span><button onclick="navigateCal(1)">▶</button></div><div class="cal-grid">`; ['日','一','二','三','四','五','六'].forEach(d=>html+=`<div class="cal-day-name">${d}</div>`); const prevM=m===0?11:m-1, prevY=m===0?y-1:y, prevDays=new Date(prevY,prevM+1,0).getDate(); for(let i=firstDay-1;i>=0;i--){ const d=prevDays-i; html+=`<div class="cal-day other-month" onclick="goToDate('${prevY}-${String(prevM+1).padStart(2,'0')}-${String(d).padStart(2,'0')}', true)">${d}</div>`; } for(let d=1;d<=daysInMonth;d++){ const ds=`${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`; let cls='cal-day'; if(ds===today)cls+=' today'; if(markedDates.has(ds))cls+=' has-notes'; html+=`<div class="${cls}" onclick="goToDate('${ds}', true)">${d}</div>`; } const total=firstDay+daysInMonth, rem=total%7===0?0:7-total%7, nextM=m===11?0:m+1, nextY=m===11?y+1:y; for(let d=1;d<=rem;d++){ html+=`<div class="cal-day other-month" onclick="goToDate('${nextY}-${String(nextM+1).padStart(2,'0')}-${String(d).padStart(2,'0')}', true)">${d}</div>`; } html+='</div>'; document.getElementById('cal-widget').innerHTML=html; }
             function navigateCal(d){ calMonth+=d; if(calMonth>11){calMonth=0;calYear++;} if(calMonth<0){calMonth=11;calYear--;} renderCalAt(calYear,calMonth); }
             function goToDate(ds, fromSidebar = false){ currentDate = ds; renderDatePanel(); if (fromSidebar) { sidebarNoteFilterDate = ds; document.querySelectorAll('.notes-subtab').forEach(t=>t.classList.remove('active')); const noteTab = document.querySelector('.notes-subtab[data-sub="sub-notes"]'); if(noteTab) noteTab.click(); renderNotesList(); } else { sidebarNoteFilterDate = null; renderNotesList(); if (window.innerWidth <= 900) { document.getElementById('sidebar').classList.remove('open-mobile'); document.getElementById('sidebar-mask').classList.remove('show'); } } renderCalendarWidget(); }
 
-            // 甘特图（保持原有完整逻辑）
+            // 甘特图 (原有逻辑)
             let editingTaskId=null, editingProjectId=null;
             function refreshGanttEditor(){ const sel=document.getElementById('gantt-project-select'), view=document.getElementById('gantt-view-select'); sel.innerHTML='<option value="">-- 选本 --</option>'; view.innerHTML='<option value="">-- 选项目 --</option>'; appData.ganttProjects.forEach(p=>{ sel.innerHTML+=`<option value="${p.id}">${escapeHtml(p.name)}</option>`; view.innerHTML+=`<option value="${p.id}">${escapeHtml(p.name)}</option>`; }); document.getElementById('gantt-project-list').innerHTML = appData.ganttProjects.map(p=>`<div class="gantt-project-item" onclick="selectGanttProjectById('${p.id}')"><span class="project-name">${escapeHtml(p.name)}</span><span class="project-count">${p.tasks.length}任务</span><span class="project-del" onclick="event.stopPropagation();deleteGanttProject('${p.id}')">✕</span></div>`).join('')||'<div style="color:var(--text3);padding:8px;">尚无项目</div>'; if(appData.activeGanttProjectId){ sel.value=appData.activeGanttProjectId; view.value=appData.activeGanttProjectId; renderGanttTasksMini(); } renderGantt(); }
             function selectGanttProject(){ const id=document.getElementById('gantt-project-select').value; if(id){ appData.activeGanttProjectId=id; saveData(appData); refreshGanttEditor(); } }
@@ -742,7 +487,7 @@
             function renderGanttTasksMini(){ const c=document.getElementById('gantt-tasks-mini-list'); if(!appData.activeGanttProjectId){c.innerHTML='';return;} const p=appData.ganttProjects.find(p=>p.id===appData.activeGanttProjectId); if(!p||!p.tasks.length){c.innerHTML='<div style="color:var(--text3);padding:8px;">无任务</div>';return;} c.innerHTML = p.tasks.map(t=>`<div class="gantt-task-mini-item" onclick="editTask('${appData.activeGanttProjectId}','${t.id}')"><span class="task-color-dot" style="background:${t.color};"></span><span class="task-name">${escapeHtml(t.name)}</span><span class="task-progress">${t.progress}%</span><span class="task-del" onclick="event.stopPropagation();deleteGanttTask('${t.id}')">✕</span></div>`).join(''); }
             function loadGanttView(){ const v=document.getElementById('gantt-view-select').value; if(v){ appData.activeGanttProjectId=v; saveData(appData); refreshGanttEditor(); } renderGantt(); }
             function renderGantt(){ const chart=document.getElementById('gantt-chart'), dr=document.getElementById('gantt-date-range'), pid=document.getElementById('gantt-view-select').value||appData.activeGanttProjectId; if(!pid){ chart.innerHTML='<div style="padding:40px;text-align:center;color:var(--text3);">请选择项目</div>'; dr.innerHTML=''; return; } const p=appData.ganttProjects.find(p=>p.id===pid); if(!p||!p.tasks.length){ chart.innerHTML='<div style="padding:40px;text-align:center;color:var(--text3);">无任务</div>'; dr.innerHTML=''; return; } let min=null,max=null; p.tasks.forEach(t=>{ if(!min||t.startDate<min)min=t.startDate; if(!max||t.endDate>max)max=t.endDate; }); const sD=new Date(min), eD=new Date(max); sD.setDate(sD.getDate()-2); eD.setDate(eD.getDate()+3); const days=[]; for(let d=new Date(sD); d<=eD; d.setDate(d.getDate()+1)) days.push(d.toISOString().split('T')[0]); dr.innerHTML = `<div style="line-height:1.3;">${sD.toLocaleDateString('zh-CN',{month:'short',day:'numeric'})}<br>${eD.toLocaleDateString('zh-CN',{month:'short',day:'numeric'})}</div>`; const today=getToday(), dw=Math.max(28, Math.floor(600/days.length)); let h=`<div class="gantt-header-row"><div class="gantt-header-label"></div><div class="gantt-header-days">`; days.forEach(d=>{ let cls='gantt-day-header'; if([0,6].includes(new Date(d).getDay())) cls+=' weekend'; if(d===today) cls+=' today-col'; h+=`<div class="${cls}" style="min-width:${dw}px;">${parseInt(d.split('-')[2])}</div>`; }); h+='</div></div>'; p.tasks.forEach(t=>{ const ts=new Date(t.startDate), te=new Date(t.endDate), left=Math.max(0,Math.ceil((ts-sD)/86400000))*dw, width=Math.max(1,Math.ceil((te-ts)/86400000)+1)*dw; h+=`<div class="gantt-row"><div class="gantt-label">${escapeHtml(t.name)}</div><div class="gantt-timeline" style="min-width:${days.length*dw}px;"><div class="gantt-bar" style="left:${left}px;width:${width}px;background:${t.color};" data-task-id="${t.id}" data-project-id="${pid}"><div class="progress-fill" style="width:${t.progress}%;"></div><span style="position:relative;z-index:1;">${t.progress}%</span><div class="resize-handle" data-task-id="${t.id}" data-project-id="${pid}"></div></div></div></div>`; }); chart.innerHTML=h; const ti=days.indexOf(today); if(ti>=0) document.getElementById('gantt-viewport').scrollLeft=Math.max(0,(ti-2)*dw); }
-            
+
             // 提醒
             let reminderInterval;
             function setupReminder(){ if(reminderInterval) clearInterval(reminderInterval); if(appSettings.reminderType==='none') return; reminderInterval=setInterval(()=>{ if(appSettings.reminderType==='random-note' && appData.notes.length) showToast(`📜 ${appData.notes[Math.floor(Math.random()*appData.notes.length)].title}`); else if(appSettings.reminderType==='habit'){ const n=new Date(); const [h,m]=appSettings.habitReminderTime.split(':').map(Number); if(n.getHours()===h&&n.getMinutes()===m) showToast('习惯打卡'); } },60000); }
@@ -750,10 +495,10 @@
             function saveReminderSettings(){ appSettings.reminderType=document.querySelector('input[name="reminder-type"]:checked').value; appSettings.randomInterval=parseInt(document.getElementById('random-interval').value)||30; appSettings.habitReminderTime=document.getElementById('habit-reminder-time').value||'09:00'; saveSettings(appSettings); setupReminder(); document.getElementById('reminder-dropdown').classList.remove('show'); }
             document.getElementById('reminder-btn').addEventListener('click',e=>{ e.stopPropagation(); document.getElementById('reminder-dropdown').classList.toggle('show'); loadReminderUI(); });
             document.addEventListener('click',e=>{ if(!document.getElementById('reminder-dropdown').contains(e.target)) document.getElementById('reminder-dropdown').classList.remove('show'); });
-            
+
             function refreshAllUI(){ renderDatePanel(); renderTodos(); renderProjects3C(); renderNotesList(); renderReviewList(); renderCalendarWidget(); refreshGanttEditor(); renderGantt(); setupReminder(); loadReminderUI(); }
-            
-            // 子标签切换
+
+            // 子标签切换 (PC端同样生效)
             document.querySelectorAll('.notes-subtab').forEach(tab => {
                 tab.addEventListener('click', function(){
                     document.querySelectorAll('.notes-subtab').forEach(t => t.classList.remove('active'));
@@ -766,15 +511,11 @@
                     else if (sub === 'sub-reviews') renderReviewList();
                 });
             });
-            
-            // 初始化
+
             async function initApp() {
                 startLoadingAnim('init');
                 if (!GIST_ID || !GIST_TOKEN) {
-                    forceHideLoading();
-                    setupModal.style.display = 'flex';
-                    refreshAllUI();
-                    return;
+                    forceHideLoading(); setupModal.style.display = 'flex'; refreshAllUI(); return;
                 }
                 startLoadingAnim('sync');
                 let cloudData = null;
@@ -782,72 +523,39 @@
                 if (cloudData) { appData = cloudData; saveLocalData(appData); showToast("时序归拢完毕，司辰。"); }
                 else { showToast("离线模式，本地手记犹存。"); }
                 stopLoadingAndHide();
-                applyTheme();
-                refreshAllUI();
+                applyTheme(); refreshAllUI();
             }
-            
             window.saveSetup = async function() {
                 const id = document.getElementById('setup-gist-id').value.trim();
                 const token = document.getElementById('setup-gist-token').value.trim();
                 if (!id || !token) { alert('请完整填写司辰密钥'); return; }
-                localStorage.setItem('pkm_gist_id', id);
-                localStorage.setItem('pkm_gist_token', token);
+                localStorage.setItem('pkm_gist_id', id); localStorage.setItem('pkm_gist_token', token);
                 GIST_ID = id; GIST_TOKEN = token;
                 setupModal.style.display = 'none';
                 startLoadingAnim('sync');
-                await syncFromCloud();
-                applyTheme();
-                refreshAllUI();
+                await syncFromCloud(); applyTheme(); refreshAllUI();
             };
-            
+
             // 暴露全局函数
-            window.addProject3C = addProject3C;
-            window.deleteProject3C = deleteProject3C;
-            window.openProject3C = openProject3C;
-            window.closeProject3C = closeProject3C;
-            window.saveProject3C = saveProject3C;
-            window.openNoteEditor = openNoteEditor;
-            window.closeNoteEditor = closeNoteEditor;
-            window.saveNote = saveNote;
-            window.deleteNote = deleteNote;
-            window.addDailyTodo = addDailyTodo;
-            window.toggleDailyTodo = toggleDailyTodo;
-            window.deleteDailyTodo = deleteDailyTodo;
-            window.addTodo = addTodo;
-            window.toggleTodo = toggleTodo;
-            window.deleteTodo = deleteTodo;
-            window.openReviewModal = openReviewModal;
-            window.closeReviewModal = closeReviewModal;
-            window.addHabitPrompt = addHabitPrompt;
-            window.deleteHabit = deleteHabit;
-            window.saveReview = saveReview;
-            window.selectGanttProject = selectGanttProject;
-            window.selectGanttProjectById = selectGanttProjectById;
-            window.createGanttProject = createGanttProject;
-            window.deleteGanttProject = deleteGanttProject;
-            window.editTask = editTask;
-            window.cancelEditTask = cancelEditTask;
-            window.addTaskToProject = addTaskToProject;
-            window.deleteGanttTask = deleteGanttTask;
-            window.loadGanttView = loadGanttView;
-            window.navigateCal = navigateCal;
-            window.goToDate = goToDate;
-            window.saveReminderSettings = saveReminderSettings;
-            window.clearSidebarDateFilter = clearSidebarDateFilter;
-            window.saveSetup = window.saveSetup;
-            
-            const sidebarEl = document.getElementById('sidebar');
-            const mask = document.getElementById('sidebar-mask');
+            window.addProject3C = addProject3C; window.deleteProject3C = deleteProject3C; window.openProject3C = openProject3C; window.closeProject3C = closeProject3C; window.saveProject3C = saveProject3C;
+            window.openNoteEditor = openNoteEditor; window.closeNoteEditor = closeNoteEditor; window.saveNote = saveNote; window.deleteNote = deleteNote;
+            window.addDailyTodo = addDailyTodo; window.toggleDailyTodo = toggleDailyTodo; window.deleteDailyTodo = deleteDailyTodo;
+            window.addTodo = addTodo; window.toggleTodo = toggleTodo; window.deleteTodo = deleteTodo;
+            window.openReviewModal = openReviewModal; window.closeReviewModal = closeReviewModal; window.addHabitPrompt = addHabitPrompt; window.deleteHabit = deleteHabit; window.saveReview = saveReview;
+            window.selectGanttProject = selectGanttProject; window.selectGanttProjectById = selectGanttProjectById; window.createGanttProject = createGanttProject; window.deleteGanttProject = deleteGanttProject;
+            window.editTask = editTask; window.cancelEditTask = cancelEditTask; window.addTaskToProject = addTaskToProject; window.deleteGanttTask = deleteGanttTask;
+            window.loadGanttView = loadGanttView; window.navigateCal = navigateCal; window.goToDate = goToDate;
+            window.saveReminderSettings = saveReminderSettings; window.clearSidebarDateFilter = clearSidebarDateFilter; window.saveSetup = window.saveSetup;
+
+            const sidebarEl = document.getElementById('sidebar'); const mask = document.getElementById('sidebar-mask');
             document.getElementById('hamburger-btn').addEventListener('click',()=>{ sidebarEl.classList.toggle('open-mobile'); mask.classList.toggle('show'); });
             mask.addEventListener('click',()=>{ sidebarEl.classList.remove('open-mobile'); mask.classList.remove('show'); });
             document.querySelectorAll('.sidebar-tab').forEach(tab=>tab.addEventListener('click',function(){ document.querySelectorAll('.sidebar-tab').forEach(t=>t.classList.remove('active')); this.classList.add('active'); document.querySelectorAll('.sidebar-panel').forEach(p=>p.classList.remove('active')); document.getElementById(this.dataset.panel).classList.add('active'); if(this.dataset.panel==='panel-calendar') renderCalendarWidget(); if(this.dataset.panel==='panel-gantt-edit') refreshGanttEditor(); if(this.dataset.panel==='panel-notes') { renderProjects3C(); } }));
-            
-            let touchStartX = 0, touchStartY = 0;
-            document.addEventListener('touchstart', (e) => { if (window.innerWidth > 900) return; const touch = e.touches[0]; touchStartX = touch.clientX; touchStartY = touch.clientY; }, { passive: true });
-            document.addEventListener('touchend', (e) => { if (window.innerWidth > 900) return; const touch = e.changedTouches[0]; const deltaX = touch.clientX - touchStartX; const deltaY = touch.clientY - touchStartY; if (Math.abs(deltaX) > 30 && Math.abs(deltaX) > Math.abs(deltaY) && touchStartX < 20 && deltaX > 0) { sidebarEl.classList.add('open-mobile'); mask.classList.add('show'); } });
-            
-            setupModal.addEventListener('click',(e)=>{ if(e.target===setupModal) setupModal.style.display='none'; });
-            project3cModal.addEventListener('click',(e)=>{ if(e.target===project3cModal) closeProject3C(); });
+            let touchStartX=0,touchStartY=0;
+            document.addEventListener('touchstart', e=>{ if(window.innerWidth>900) return; const touch=e.touches[0]; touchStartX=touch.clientX; touchStartY=touch.clientY; },{passive:true});
+            document.addEventListener('touchend', e=>{ if(window.innerWidth>900) return; const touch=e.changedTouches[0]; const deltaX=touch.clientX-touchStartX, deltaY=touch.clientY-touchStartY; if(Math.abs(deltaX)>30&&Math.abs(deltaX)>Math.abs(deltaY)&&touchStartX<20&&deltaX>0){ sidebarEl.classList.add('open-mobile'); mask.classList.add('show'); } });
+            setupModal.addEventListener('click',e=>{ if(e.target===setupModal) setupModal.style.display='none'; });
+            project3cModal.addEventListener('click',e=>{ if(e.target===project3cModal) closeProject3C(); });
             initApp();
             setInterval(()=>saveLocalData(appData),60000);
         })();
