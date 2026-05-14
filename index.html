@@ -7,7 +7,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>Hypomnema · 司辰手记</title>
     <style>
-        /* ========== 变量与纹理 (完整保留) ========== */
+        /* ========== 变量与纹理 ========== */
         :root {
             --bg: #1a1714;
             --surface: rgba(25,22,20,0.75);
@@ -82,7 +82,6 @@
         .sidebar-panel { flex:1; overflow-y:auto; display:none; flex-direction:column; padding:12px; }
         .sidebar-panel.active { display:flex; }
 
-        /* 纪事子标签 */
         .notes-subtabs { display:flex; border-bottom:1px solid var(--border); margin-bottom:12px; }
         .notes-subtab { flex:1; padding:8px 4px; text-align:center; cursor:pointer; font-size:12px; color:var(--text3); border-bottom:1px solid transparent; transition:var(--transition); letter-spacing:1px; }
         .notes-subtab:hover, .notes-subtab.active { color:var(--accent); border-bottom-color:var(--accent); }
@@ -225,20 +224,17 @@
             <div class="sidebar-tab" data-panel="panel-gantt-edit">时序</div>
         </div>
         <div class="sidebar-panel active" id="panel-notes">
-            <!-- 子标签 -->
             <div class="notes-subtabs">
                 <div class="notes-subtab active" data-sub="sub-3c">3C</div>
                 <div class="notes-subtab" data-sub="sub-notes">笔记</div>
                 <div class="notes-subtab" data-sub="sub-reviews">复盘</div>
             </div>
-            <!-- 3C 列表 -->
             <div id="sub-3c" class="sub-panel active">
                 <div style="display:flex; gap:6px; margin-bottom:8px;">
                     <button class="btn btn-accent" onclick="addProject3C()" style="flex:1;">＋ 新工程</button>
                 </div>
                 <div class="projects-list" id="projects-3c-list"></div>
             </div>
-            <!-- 笔记列表 -->
             <div id="sub-notes" class="sub-panel" style="display:none;">
                 <div class="notes-list-header">
                     <input type="text" id="note-search" placeholder="搜刮记忆残响…">
@@ -247,7 +243,6 @@
                 </div>
                 <div class="notes-list" id="notes-list"></div>
             </div>
-            <!-- 复盘列表 -->
             <div id="sub-reviews" class="sub-panel" style="display:none;">
                 <div style="display:flex; gap:6px; margin-bottom:8px;">
                     <button class="btn btn-accent" onclick="openReviewModal()" style="flex:1;">＋ 新复盘</button>
@@ -275,20 +270,18 @@
         </div>
     </div>
 
-    <!-- 弹窗：3C工程编辑 -->
+    <!-- 弹窗：3C -->
     <div class="modal-overlay" id="project-3c-modal" style="display:none;"><div class="modal"><h3 id="project-3c-title">编辑工程</h3><input type="text" id="project-3c-name" placeholder="工程名称"><textarea id="project-3c-concentration" placeholder="浓缩点…"></textarea><textarea id="project-3c-capture" placeholder="抓点…"></textarea><div class="btn-row"><button class="btn btn-outline" onclick="closeProject3C()">取消</button><button class="btn btn-accent" onclick="saveProject3C()">保存</button></div></div></div>
-
-    <!-- 弹窗：普通笔记编辑 -->
+    <!-- 弹窗：普通笔记 -->
     <div class="modal-overlay" id="note-modal" style="display:none;"><div class="modal"><h3 id="note-modal-title">新建纪事</h3><input type="text" id="note-title-input" placeholder="标题"><div class="tag-list" id="note-type-tags"><span class="tag-chip selected" data-type="note">📜 纪事</span><span class="tag-chip" data-type="code">⌨️ 代码</span></div><textarea id="note-content-input" placeholder="在此书写…"></textarea><input type="text" id="note-tags-input" placeholder="标签（逗号分隔）"><div class="btn-row"><button class="btn btn-outline" onclick="closeNoteEditor()">取消</button><button class="btn btn-accent" onclick="saveNote()">保存</button></div></div></div>
-
-    <!-- 弹窗：复盘 (改进模板) -->
+    <!-- 弹窗：复盘 -->
     <div class="modal-overlay" id="review-modal" style="display:none;"><div class="modal"><h3>夜间复盘 <span id="review-date-label"></span></h3><div><strong>目标</strong><textarea id="review-goal" placeholder="今日目标…" style="min-height:60px;"></textarea></div><div><strong>经历</strong><textarea id="review-experience" placeholder="今日经历…" style="min-height:60px;"></textarea></div><div><strong>问题</strong><textarea id="review-problem" placeholder="遇到的问题…" style="min-height:60px;"></textarea></div><div><strong>改变</strong><textarea id="review-change" placeholder="可能的改变…" style="min-height:60px;"></textarea></div><div style="margin-top:12px;"><strong>习惯律动：</strong><div id="habit-check-list" style="margin:8px 0;"></div><button class="btn btn-outline" onclick="addHabitPrompt()">＋ 添加习惯</button></div><div class="btn-row"><button class="btn btn-outline" onclick="closeReviewModal()">取消</button><button class="btn btn-accent" onclick="saveReview()">铭记复盘</button></div></div></div>
-
+    <!-- 设置弹窗 -->
     <div class="modal-overlay" id="setup-modal" style="display:none;"><div class="modal"><h3>司辰，请出示密钥</h3><p style="font-size:13px;color:var(--text2);">Gist ID 与 Token 仅存于这台设备的流溢中。<br>它们连通「箱子」深处的备份。</p><input type="text" id="setup-gist-id" placeholder="Gist ID"><input type="password" id="setup-gist-token" placeholder="GitHub Token"><div class="btn-row"><button class="btn btn-accent" onclick="saveSetup()">同步并归拢</button></div><p style="font-size:10px;color:var(--text3);">若暂不联机，关闭此窗亦可离线书写。</p></div></div>
 
     <script>
         (function(){
-            // ========== 加载动画 Canvas (保持之前移动端优化版本) ==========
+            // ========== 加载动画 Canvas (完整版) ==========
             function initLoadingAnimation() {
                 const canvas = document.getElementById('loading-canvas');
                 if (!canvas) return;
@@ -422,7 +415,6 @@
                     ctx.lineCap = 'butt';
                     if (shadow) { ctx.shadowBlur = 10; ctx.shadowColor = 'rgba(201,169,97,0.7)'; }
                     else { ctx.shadowBlur = 0; ctx.shadowColor = 'transparent'; }
-
                     const gapStart = bigGapMidAngle - BIG_ARC_GAP_DEG/2;
                     const gapEnd = bigGapMidAngle + BIG_ARC_GAP_DEG/2;
                     function drawBig(radius, color) {
@@ -433,7 +425,6 @@
                     }
                     drawBig(OUTER_R, `rgba(201,169,97,${opacity})`);
                     drawBig(INNER_R, `rgba(201,169,97,${opacity})`);
-
                     const half = SMALL_ARC_DEG/2;
                     let ss = smallMidAngle - half, se = smallMidAngle + half;
                     ctx.beginPath();
@@ -449,7 +440,6 @@
                     drawArcsAtOrigin(opacity, true);
                     ctx.restore();
                 }
-
                 function drawReflection() {
                     ctx.save();
                     ctx.translate(regionCenterX, groundY);
@@ -460,7 +450,6 @@
                     ctx.globalAlpha = 1;
                     ctx.restore();
                 }
-
                 function drawGroundLine() {
                     ctx.beginPath();
                     ctx.moveTo(0, groundY); ctx.lineTo(width, groundY);
@@ -476,12 +465,10 @@
                     bgGrad.addColorStop(1, 'rgba(26,23,20,0)');
                     ctx.fillStyle = bgGrad;
                     ctx.fillRect(0, 0, width, height);
-
                     updateAngles(now);
                     drawReflection();
                     drawGroundLine();
                     drawArcs(1.0);
-
                     raindrops.forEach(d => { d.update(); d.draw(ctx); });
                     for (let i = splashes.length-1; i >= 0; i--) {
                         splashes[i].update(); splashes[i].draw(ctx);
@@ -493,9 +480,7 @@
                 requestAnimationFrame(animate);
             }
 
-            window.addEventListener('load', () => {
-                initLoadingAnimation();
-            });
+            window.addEventListener('load', () => initLoadingAnimation());
 
             // ========== 主程序 ==========
             let GIST_ID = localStorage.getItem('pkm_gist_id') || '';
@@ -507,7 +492,7 @@
             function getDefaultData() { return { 
                 notes: [], todos: [], dailyTodos: {}, reviews: {}, habits: [], 
                 ganttProjects: [], activeGanttProjectId: null,
-                projects3C: [] // 新增3C工程数组
+                projects3C: []
             }; }
             function loadLocalData() { try { const raw = localStorage.getItem(STORAGE_KEY); if (raw) return Object.assign(getDefaultData(), JSON.parse(raw)); } catch(e) {} return getDefaultData(); }
             function saveLocalData(data) { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }
@@ -519,7 +504,6 @@
             function saveSettings(s) { localStorage.setItem(SETTINGS_KEY, JSON.stringify(s)); }
             let currentDate = new Date().toISOString().split('T')[0];
             let sidebarNoteFilterDate = null;
-            let currentNoteSubtab = 'sub-3c'; // 当前纪事子视图
             
             const loadingVeil = document.getElementById('loading-veil');
             const setupModal = document.getElementById('setup-modal');
@@ -567,11 +551,10 @@
             function applyTheme() { const html=document.documentElement; if (appSettings.theme==='light') { html.setAttribute('data-theme','light'); document.getElementById('page-title').textContent='Hypomnema'; } else { html.removeAttribute('data-theme'); document.getElementById('page-title').textContent='Reverse Chronicle'; } }
             document.getElementById('theme-toggle').addEventListener('click',()=>{ appSettings.theme=appSettings.theme==='dark'?'light':'dark'; applyTheme(); saveSettings(appSettings); });
             
-            // ========== 3C 工程管理 ==========
+            // ========== 3C 工程 ==========
             function addProject3C() {
                 if (appData.projects3C.length >= 15) { showToast('工程已达上限（15个）'); return; }
-                const newProject = { id: genId(), name: '新工程', concentration: '', capture: '' };
-                appData.projects3C.push(newProject);
+                appData.projects3C.push({ id: genId(), name: '新工程', concentration: '', capture: '' });
                 saveData(appData);
                 renderProjects3C();
             }
@@ -588,13 +571,9 @@
                 document.getElementById('project-3c-name').value = p.name;
                 document.getElementById('project-3c-concentration').value = p.concentration || '';
                 document.getElementById('project-3c-capture').value = p.capture || '';
-                document.getElementById('project-3c-title').textContent = '编辑工程';
                 project3cModal.style.display = 'flex';
             }
-            function closeProject3C() {
-                project3cModal.style.display = 'none';
-                editingProject3cId = null;
-            }
+            function closeProject3C() { project3cModal.style.display = 'none'; editingProject3cId = null; }
             function saveProject3C() {
                 if (!editingProject3cId) return;
                 const p = appData.projects3C.find(p => p.id === editingProject3cId);
@@ -622,7 +601,7 @@
             
             // ========== 普通笔记 ==========
             function renderNotesList(filter=''){ 
-                let notes = appData.notes.filter(n => n.type !== 'review'); // 过滤掉复盘笔记
+                let notes = appData.notes.filter(n => n.type !== 'review');
                 if (sidebarNoteFilterDate) notes = notes.filter(n => n.date === sidebarNoteFilterDate);
                 if (filter) notes = notes.filter(n => (n.title||'').includes(filter) || (n.content||'').includes(filter));
                 notes.sort((a,b)=>new Date(b.updatedAt||b.createdAt)-new Date(a.updatedAt||a.createdAt));
@@ -636,9 +615,7 @@
                 if (sidebarNoteFilterDate) {
                     tag.style.display = 'inline-flex';
                     tag.innerHTML = `📅 ${formatDate(sidebarNoteFilterDate)} <span class="clear-filter" onclick="clearSidebarDateFilter()">✕</span>`;
-                } else {
-                    tag.style.display = 'none';
-                }
+                } else tag.style.display = 'none';
             }
             window.clearSidebarDateFilter = function() { sidebarNoteFilterDate = null; renderNotesList(); };
             let editingNoteId=null;
@@ -651,14 +628,12 @@
                     document.getElementById('note-title-input').value=n.title||''; 
                     document.getElementById('note-content-input').value=n.content||''; 
                     document.getElementById('note-tags-input').value=(n.tags||[]).join(','); 
-                    document.getElementById('note-content-input').className=n.type==='code'?'code-area':''; 
                     document.querySelectorAll('#note-type-tags .tag-chip').forEach(c=>c.classList.toggle('selected',c.dataset.type===n.type)); 
                 }else{ 
                     document.getElementById('note-modal-title').textContent='新建纪事'; 
                     document.getElementById('note-title-input').value=''; 
                     document.getElementById('note-content-input').value=''; 
                     document.getElementById('note-tags-input').value=''; 
-                    document.getElementById('note-content-input').className=''; 
                     document.querySelectorAll('#note-type-tags .tag-chip').forEach(c=>c.classList.toggle('selected',c.dataset.type==='note')); 
                 } 
                 noteModal.style.display='flex'; 
@@ -681,7 +656,7 @@
             document.getElementById('note-type-tags').addEventListener('click',e=>{ if(e.target.classList.contains('tag-chip')){ document.querySelectorAll('#note-type-tags .tag-chip').forEach(c=>c.classList.remove('selected')); e.target.classList.add('selected'); } });
             noteModal.addEventListener('click',e=>{ if(e.target===noteModal) closeNoteEditor(); });
 
-            // ========== 复盘 (新模板) ==========
+            // ========== 复盘 ==========
             function renderReviewList() {
                 const reviews = appData.notes.filter(n => n.type === 'review').sort((a,b)=>new Date(b.updatedAt||b.createdAt)-new Date(a.updatedAt||a.createdAt));
                 const container = document.getElementById('review-list');
@@ -698,7 +673,6 @@
             }
             function openReviewModal(){
                 document.getElementById('review-date-label').textContent = formatDate(currentDate);
-                // 清空模板内容
                 document.getElementById('review-goal').value = '';
                 document.getElementById('review-experience').value = '';
                 document.getElementById('review-problem').value = '';
@@ -721,7 +695,6 @@
                 const habits = {}; 
                 document.querySelectorAll('#habit-check-list input').forEach(cb=>habits[cb.dataset.habit]=cb.checked); 
                 appData.reviews[currentDate]={content:'', habits, createdAt:new Date().toISOString()}; 
-                // 组合笔记内容
                 const fullContent = `# 复盘 ${currentDate}\n\n## 目标\n${goal}\n\n## 经历\n${experience}\n\n## 问题\n${problem}\n\n## 改变\n${change}`;
                 const exist=appData.notes.find(n=>n.type==='review'&&n.date===currentDate);
                 if(exist){ exist.content=fullContent; exist.updatedAt=new Date().toISOString(); } 
@@ -730,59 +703,153 @@
             }
             reviewModal.addEventListener('click',e=>{ if(e.target===reviewModal) closeReviewModal(); });
             
-            // ========== 日期面板关联 ==========
+            // ========== 待办、日历、甘特图等（完整实现） ==========
             function renderDatePanel() {
                 const today = getToday();
-                const isToday = (currentDate === today);
-                document.getElementById('date-title-text').textContent = isToday ? '☉ 今日残片' : '☉ 择日残片';
+                document.getElementById('date-title-text').textContent = (currentDate === today) ? '☉ 今日残片' : '☉ 择日残片';
                 document.getElementById('selected-date-label').textContent = formatDate(currentDate);
                 const daily = appData.dailyTodos[currentDate] || [];
                 document.getElementById('daily-todo-list').innerHTML = daily.map((t,i)=>`<div class="todo-item"><div class="todo-checkbox${t.completed?' done':''}" onclick="toggleDailyTodo(${i})">${t.completed?'✔':''}</div><span class="todo-text${t.completed?' done':''}">${escapeHtml(t.title)}</span><span class="todo-priority priority-${t.priority||'mid'}"></span><span class="todo-del" onclick="deleteDailyTodo(${i})">✕</span></div>`).join('') || '<div style="padding:20px;color:var(--text3);">此日未镌刻任务</div>';
                 const relatedNotes = appData.notes.filter(n => n.date === currentDate && n.type !== 'review').sort((a,b)=>new Date(b.updatedAt||b.createdAt)-new Date(a.updatedAt||a.createdAt));
                 document.getElementById('date-related-notes').innerHTML = relatedNotes.map(n=>`<div class="note-preview-item" onclick="openNoteEditor('${n.id}')"><div class="note-preview-title">${escapeHtml(n.title||'无题')} <span class="badge">${n.type==='code'?'代码':'纪事'}</span></div><div class="note-preview-meta">${(n.content||'').substring(0,60)}${(n.content||'').length>60?'…':''}</div></div>`).join('') || '<div style="color:var(--text3);padding:8px;">尚无笔迹落于此日</div>';
             }
-            // 其他待办、日历等函数保持，省略以节省篇幅，但完整代码中包含，下同
-            function addDailyTodo(){ /*...*/ }
-            function toggleDailyTodo(i){ /*...*/ }
-            function deleteDailyTodo(i){ /*...*/ }
-            function renderTodos(){ /*...*/ }
-            function addTodo(){ /*...*/ }
-            function toggleTodo(id){ /*...*/ }
-            function deleteTodo(id){ /*...*/ }
-            // ... 甘特图等全部功能保持不变 (略)
+            function addDailyTodo(){ const t=document.getElementById('daily-todo-input').value.trim(); if(!t)return; if(!appData.dailyTodos[currentDate]) appData.dailyTodos[currentDate]=[]; appData.dailyTodos[currentDate].push({id:genId(),title:t,completed:false,priority:document.getElementById('daily-todo-priority').value}); document.getElementById('daily-todo-input').value=''; saveData(appData); renderDatePanel(); renderCalendarWidget(); }
+            function toggleDailyTodo(i){ if(appData.dailyTodos[currentDate]?.[i]){ appData.dailyTodos[currentDate][i].completed=!appData.dailyTodos[currentDate][i].completed; saveData(appData); renderDatePanel(); } }
+            function deleteDailyTodo(i){ if(appData.dailyTodos[currentDate]){ appData.dailyTodos[currentDate].splice(i,1); if(!appData.dailyTodos[currentDate].length) delete appData.dailyTodos[currentDate]; saveData(appData); renderDatePanel(); renderCalendarWidget(); } }
+            function renderTodos(){ const sorted=[...appData.todos].sort((a,b)=>{ if(a.completed!==b.completed)return a.completed?1:-1; return ({high:0,mid:1,low:2}[a.priority]||1)-({high:0,mid:1,low:2}[b.priority]||1); }); document.getElementById('todo-list').innerHTML=sorted.map(t=>`<div class="todo-item"><div class="todo-checkbox${t.completed?' done':''}" onclick="toggleTodo('${t.id}')">${t.completed?'✔':''}</div><span class="todo-text${t.completed?' done':''}">${escapeHtml(t.title)}</span><span class="todo-priority priority-${t.priority||'mid'}"></span><span class="todo-del" onclick="deleteTodo('${t.id}')">✕</span></div>`).join('')||'<div style="padding:20px;color:var(--text3);">暂无待办</div>'; }
+            function addTodo(){ const t=document.getElementById('todo-input').value.trim(); if(!t)return; appData.todos.push({id:genId(),title:t,completed:false,priority:document.getElementById('todo-priority').value}); document.getElementById('todo-input').value=''; saveData(appData); renderTodos(); }
+            function toggleTodo(id){ const t=appData.todos.find(t=>t.id===id); if(t){t.completed=!t.completed; saveData(appData); renderTodos();} }
+            function deleteTodo(id){ appData.todos=appData.todos.filter(t=>t.id!==id); saveData(appData); renderTodos(); }
+
+            // 日历
+            let calYear,calMonth;
+            function renderCalendarWidget(){ const n=new Date(); calYear=n.getFullYear(); calMonth=n.getMonth(); renderCalAt(calYear,calMonth); }
+            function renderCalAt(y,m){ const monthNames=['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月']; const daysInMonth=new Date(y,m+1,0).getDate(); const firstDay=new Date(y,m,1).getDay(); const today=getToday(); const markedDates=new Set(); appData.notes.forEach(n=>{ const d=(n.date||n.createdAt||'').split('T')[0]; if(d)markedDates.add(d); }); Object.keys(appData.reviews).forEach(d=>markedDates.add(d)); Object.keys(appData.dailyTodos).forEach(d=>{ if(appData.dailyTodos[d]?.length)markedDates.add(d); }); let html=`<div class="cal-header"><button onclick="navigateCal(-1)">◀</button><span class="cal-month-label">${y}年 ${monthNames[m]}</span><button onclick="navigateCal(1)">▶</button></div><div class="cal-grid">`; ['日','一','二','三','四','五','六'].forEach(d=>html+=`<div class="cal-day-name">${d}</div>`); const prevM=m===0?11:m-1, prevY=m===0?y-1:y, prevDays=new Date(prevY,prevM+1,0).getDate(); for(let i=firstDay-1;i>=0;i--){ const d=prevDays-i; html+=`<div class="cal-day other-month" onclick="goToDate('${prevY}-${String(prevM+1).padStart(2,'0')}-${String(d).padStart(2,'0')}', true)">${d}</div>`; } for(let d=1;d<=daysInMonth;d++){ const ds=`${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`; let cls='cal-day'; if(ds===today)cls+=' today'; if(markedDates.has(ds))cls+=' has-notes'; html+=`<div class="${cls}" onclick="goToDate('${ds}', true)">${d}</div>`; } const total=firstDay+daysInMonth, rem=total%7===0?0:7-total%7, nextM=m===11?0:m+1, nextY=m===11?y+1:y; for(let d=1;d<=rem;d++){ html+=`<div class="cal-day other-month" onclick="goToDate('${nextY}-${String(nextM+1).padStart(2,'0')}-${String(d).padStart(2,'0')}', true)">${d}</div>`; } html+='</div>'; document.getElementById('cal-widget').innerHTML=html; }
+            function navigateCal(d){ calMonth+=d; if(calMonth>11){calMonth=0;calYear++;} if(calMonth<0){calMonth=11;calYear--;} renderCalAt(calYear,calMonth); }
+            function goToDate(ds, fromSidebar = false){ currentDate = ds; renderDatePanel(); if (fromSidebar) { sidebarNoteFilterDate = ds; document.querySelectorAll('.notes-subtab').forEach(t=>t.classList.remove('active')); const noteTab = document.querySelector('.notes-subtab[data-sub="sub-notes"]'); if(noteTab) noteTab.click(); renderNotesList(); } else { sidebarNoteFilterDate = null; renderNotesList(); if (window.innerWidth <= 900) { document.getElementById('sidebar').classList.remove('open-mobile'); document.getElementById('sidebar-mask').classList.remove('show'); } } renderCalendarWidget(); }
+
+            // 甘特图（保持原有完整逻辑）
+            let editingTaskId=null, editingProjectId=null;
+            function refreshGanttEditor(){ const sel=document.getElementById('gantt-project-select'), view=document.getElementById('gantt-view-select'); sel.innerHTML='<option value="">-- 选本 --</option>'; view.innerHTML='<option value="">-- 选项目 --</option>'; appData.ganttProjects.forEach(p=>{ sel.innerHTML+=`<option value="${p.id}">${escapeHtml(p.name)}</option>`; view.innerHTML+=`<option value="${p.id}">${escapeHtml(p.name)}</option>`; }); document.getElementById('gantt-project-list').innerHTML = appData.ganttProjects.map(p=>`<div class="gantt-project-item" onclick="selectGanttProjectById('${p.id}')"><span class="project-name">${escapeHtml(p.name)}</span><span class="project-count">${p.tasks.length}任务</span><span class="project-del" onclick="event.stopPropagation();deleteGanttProject('${p.id}')">✕</span></div>`).join('')||'<div style="color:var(--text3);padding:8px;">尚无项目</div>'; if(appData.activeGanttProjectId){ sel.value=appData.activeGanttProjectId; view.value=appData.activeGanttProjectId; renderGanttTasksMini(); } renderGantt(); }
+            function selectGanttProject(){ const id=document.getElementById('gantt-project-select').value; if(id){ appData.activeGanttProjectId=id; saveData(appData); refreshGanttEditor(); } }
+            function selectGanttProjectById(id){ appData.activeGanttProjectId=id; saveData(appData); refreshGanttEditor(); }
+            function createGanttProject(){ const n=document.getElementById('new-project-name').value.trim(); if(!n)return; const p={id:genId(),name:n,tasks:[],createdAt:new Date().toISOString()}; appData.ganttProjects.push(p); appData.activeGanttProjectId=p.id; saveData(appData); refreshGanttEditor(); }
+            function deleteGanttProject(id){ if(!confirm('删除？'))return; appData.ganttProjects=appData.ganttProjects.filter(p=>p.id!==id); if(appData.activeGanttProjectId===id)appData.activeGanttProjectId=null; saveData(appData); refreshGanttEditor(); }
+            function editTask(pid,tid){ const p=appData.ganttProjects.find(p=>p.id===pid); if(!p)return; const t=p.tasks.find(t=>t.id===tid); if(!t)return; document.getElementById('new-task-name').value=t.name; document.getElementById('new-task-start').value=t.startDate; document.getElementById('new-task-end').value=t.endDate; document.getElementById('new-task-progress').value=t.progress; document.getElementById('new-task-color').value=t.color; document.getElementById('task-save-btn').textContent='更新'; document.getElementById('task-cancel-btn').style.display='inline-block'; editingTaskId=tid; editingProjectId=pid; }
+            function cancelEditTask(){ document.getElementById('new-task-name').value=''; document.getElementById('new-task-start').value=''; document.getElementById('new-task-end').value=''; document.getElementById('new-task-progress').value='0'; document.getElementById('task-save-btn').textContent='添加'; document.getElementById('task-cancel-btn').style.display='none'; editingTaskId=null; editingProjectId=null; }
+            function addTaskToProject(){ const pid=editingProjectId||appData.activeGanttProjectId; if(!pid){showToast('先选项目');return;} const p=appData.ganttProjects.find(p=>p.id===pid); if(!p)return; const n=document.getElementById('new-task-name').value.trim(), s=document.getElementById('new-task-start').value, e=document.getElementById('new-task-end').value; const prog=parseInt(document.getElementById('new-task-progress').value)||0, col=document.getElementById('new-task-color').value; if(!n||!s||!e){showToast('填完整');return;} if(e<s){showToast('日期错误');return;} if(editingTaskId){ const t=p.tasks.find(t=>t.id===editingTaskId); if(t){ t.name=n; t.startDate=s; t.endDate=e; t.progress=Math.min(100,Math.max(0,prog)); t.color=col; } cancelEditTask(); } else { p.tasks.push({id:genId(),name:n,startDate:s,endDate:e,progress:Math.min(100,Math.max(0,prog)),color:col}); document.getElementById('new-task-name').value=''; document.getElementById('new-task-progress').value='0'; } saveData(appData); refreshGanttEditor(); }
+            function deleteGanttTask(tid){ const p=appData.ganttProjects.find(p=>p.id===appData.activeGanttProjectId); if(!p)return; p.tasks=p.tasks.filter(t=>t.id!==tid); saveData(appData); refreshGanttEditor(); }
+            function renderGanttTasksMini(){ const c=document.getElementById('gantt-tasks-mini-list'); if(!appData.activeGanttProjectId){c.innerHTML='';return;} const p=appData.ganttProjects.find(p=>p.id===appData.activeGanttProjectId); if(!p||!p.tasks.length){c.innerHTML='<div style="color:var(--text3);padding:8px;">无任务</div>';return;} c.innerHTML = p.tasks.map(t=>`<div class="gantt-task-mini-item" onclick="editTask('${appData.activeGanttProjectId}','${t.id}')"><span class="task-color-dot" style="background:${t.color};"></span><span class="task-name">${escapeHtml(t.name)}</span><span class="task-progress">${t.progress}%</span><span class="task-del" onclick="event.stopPropagation();deleteGanttTask('${t.id}')">✕</span></div>`).join(''); }
+            function loadGanttView(){ const v=document.getElementById('gantt-view-select').value; if(v){ appData.activeGanttProjectId=v; saveData(appData); refreshGanttEditor(); } renderGantt(); }
+            function renderGantt(){ const chart=document.getElementById('gantt-chart'), dr=document.getElementById('gantt-date-range'), pid=document.getElementById('gantt-view-select').value||appData.activeGanttProjectId; if(!pid){ chart.innerHTML='<div style="padding:40px;text-align:center;color:var(--text3);">请选择项目</div>'; dr.innerHTML=''; return; } const p=appData.ganttProjects.find(p=>p.id===pid); if(!p||!p.tasks.length){ chart.innerHTML='<div style="padding:40px;text-align:center;color:var(--text3);">无任务</div>'; dr.innerHTML=''; return; } let min=null,max=null; p.tasks.forEach(t=>{ if(!min||t.startDate<min)min=t.startDate; if(!max||t.endDate>max)max=t.endDate; }); const sD=new Date(min), eD=new Date(max); sD.setDate(sD.getDate()-2); eD.setDate(eD.getDate()+3); const days=[]; for(let d=new Date(sD); d<=eD; d.setDate(d.getDate()+1)) days.push(d.toISOString().split('T')[0]); dr.innerHTML = `<div style="line-height:1.3;">${sD.toLocaleDateString('zh-CN',{month:'short',day:'numeric'})}<br>${eD.toLocaleDateString('zh-CN',{month:'short',day:'numeric'})}</div>`; const today=getToday(), dw=Math.max(28, Math.floor(600/days.length)); let h=`<div class="gantt-header-row"><div class="gantt-header-label"></div><div class="gantt-header-days">`; days.forEach(d=>{ let cls='gantt-day-header'; if([0,6].includes(new Date(d).getDay())) cls+=' weekend'; if(d===today) cls+=' today-col'; h+=`<div class="${cls}" style="min-width:${dw}px;">${parseInt(d.split('-')[2])}</div>`; }); h+='</div></div>'; p.tasks.forEach(t=>{ const ts=new Date(t.startDate), te=new Date(t.endDate), left=Math.max(0,Math.ceil((ts-sD)/86400000))*dw, width=Math.max(1,Math.ceil((te-ts)/86400000)+1)*dw; h+=`<div class="gantt-row"><div class="gantt-label">${escapeHtml(t.name)}</div><div class="gantt-timeline" style="min-width:${days.length*dw}px;"><div class="gantt-bar" style="left:${left}px;width:${width}px;background:${t.color};" data-task-id="${t.id}" data-project-id="${pid}"><div class="progress-fill" style="width:${t.progress}%;"></div><span style="position:relative;z-index:1;">${t.progress}%</span><div class="resize-handle" data-task-id="${t.id}" data-project-id="${pid}"></div></div></div></div>`; }); chart.innerHTML=h; const ti=days.indexOf(today); if(ti>=0) document.getElementById('gantt-viewport').scrollLeft=Math.max(0,(ti-2)*dw); }
             
-            // 刷新 UI 时需要同时刷新三个子视图
-            function refreshAllUI(){ 
-                renderDatePanel(); renderTodos(); 
-                renderProjects3C(); renderNotesList(); renderReviewList();
-                renderCalendarWidget(); refreshGanttEditor(); renderGantt(); 
-                setupReminder(); loadReminderUI(); 
-            }
+            // 提醒
+            let reminderInterval;
+            function setupReminder(){ if(reminderInterval) clearInterval(reminderInterval); if(appSettings.reminderType==='none') return; reminderInterval=setInterval(()=>{ if(appSettings.reminderType==='random-note' && appData.notes.length) showToast(`📜 ${appData.notes[Math.floor(Math.random()*appData.notes.length)].title}`); else if(appSettings.reminderType==='habit'){ const n=new Date(); const [h,m]=appSettings.habitReminderTime.split(':').map(Number); if(n.getHours()===h&&n.getMinutes()===m) showToast('习惯打卡'); } },60000); }
+            function loadReminderUI(){ document.querySelectorAll('input[name="reminder-type"]').forEach(r=>{ if(r.value===appSettings.reminderType) r.checked=true; }); document.getElementById('random-interval').value=appSettings.randomInterval; document.getElementById('habit-reminder-time').value=appSettings.habitReminderTime; }
+            function saveReminderSettings(){ appSettings.reminderType=document.querySelector('input[name="reminder-type"]:checked').value; appSettings.randomInterval=parseInt(document.getElementById('random-interval').value)||30; appSettings.habitReminderTime=document.getElementById('habit-reminder-time').value||'09:00'; saveSettings(appSettings); setupReminder(); document.getElementById('reminder-dropdown').classList.remove('show'); }
+            document.getElementById('reminder-btn').addEventListener('click',e=>{ e.stopPropagation(); document.getElementById('reminder-dropdown').classList.toggle('show'); loadReminderUI(); });
+            document.addEventListener('click',e=>{ if(!document.getElementById('reminder-dropdown').contains(e.target)) document.getElementById('reminder-dropdown').classList.remove('show'); });
+            
+            function refreshAllUI(){ renderDatePanel(); renderTodos(); renderProjects3C(); renderNotesList(); renderReviewList(); renderCalendarWidget(); refreshGanttEditor(); renderGantt(); setupReminder(); loadReminderUI(); }
             
             // 子标签切换
             document.querySelectorAll('.notes-subtab').forEach(tab => {
                 tab.addEventListener('click', function(){
                     document.querySelectorAll('.notes-subtab').forEach(t => t.classList.remove('active'));
                     this.classList.add('active');
-                    currentNoteSubtab = this.dataset.sub;
+                    const sub = this.dataset.sub;
                     document.querySelectorAll('#panel-notes .sub-panel').forEach(p => p.style.display = 'none');
-                    document.getElementById(currentNoteSubtab).style.display = 'block';
-                    if (currentNoteSubtab === 'sub-3c') renderProjects3C();
-                    else if (currentNoteSubtab === 'sub-notes') renderNotesList();
-                    else if (currentNoteSubtab === 'sub-reviews') renderReviewList();
+                    document.getElementById(sub).style.display = 'block';
+                    if (sub === 'sub-3c') renderProjects3C();
+                    else if (sub === 'sub-notes') renderNotesList();
+                    else if (sub === 'sub-reviews') renderReviewList();
                 });
             });
             
-            // 初始化默认显示3C
-            document.getElementById('sub-3c').style.display = 'block';
+            // 初始化
+            async function initApp() {
+                startLoadingAnim('init');
+                if (!GIST_ID || !GIST_TOKEN) {
+                    forceHideLoading();
+                    setupModal.style.display = 'flex';
+                    refreshAllUI();
+                    return;
+                }
+                startLoadingAnim('sync');
+                let cloudData = null;
+                try { cloudData = await fetchFromGist(); } catch(e) {}
+                if (cloudData) { appData = cloudData; saveLocalData(appData); showToast("时序归拢完毕，司辰。"); }
+                else { showToast("离线模式，本地手记犹存。"); }
+                stopLoadingAndHide();
+                applyTheme();
+                refreshAllUI();
+            }
             
-            // ========== 其余功能 (日历、甘特图等) 整合 ==========
-            // 因篇幅限制，此处保留原逻辑，完整文件中均已包含
-            // ... (之前版本中的代码)
+            window.saveSetup = async function() {
+                const id = document.getElementById('setup-gist-id').value.trim();
+                const token = document.getElementById('setup-gist-token').value.trim();
+                if (!id || !token) { alert('请完整填写司辰密钥'); return; }
+                localStorage.setItem('pkm_gist_id', id);
+                localStorage.setItem('pkm_gist_token', token);
+                GIST_ID = id; GIST_TOKEN = token;
+                setupModal.style.display = 'none';
+                startLoadingAnim('sync');
+                await syncFromCloud();
+                applyTheme();
+                refreshAllUI();
+            };
             
-            // 启动
-            async function initApp() { /* ... */ }
+            // 暴露全局函数
+            window.addProject3C = addProject3C;
+            window.deleteProject3C = deleteProject3C;
+            window.openProject3C = openProject3C;
+            window.closeProject3C = closeProject3C;
+            window.saveProject3C = saveProject3C;
+            window.openNoteEditor = openNoteEditor;
+            window.closeNoteEditor = closeNoteEditor;
+            window.saveNote = saveNote;
+            window.deleteNote = deleteNote;
+            window.addDailyTodo = addDailyTodo;
+            window.toggleDailyTodo = toggleDailyTodo;
+            window.deleteDailyTodo = deleteDailyTodo;
+            window.addTodo = addTodo;
+            window.toggleTodo = toggleTodo;
+            window.deleteTodo = deleteTodo;
+            window.openReviewModal = openReviewModal;
+            window.closeReviewModal = closeReviewModal;
+            window.addHabitPrompt = addHabitPrompt;
+            window.deleteHabit = deleteHabit;
+            window.saveReview = saveReview;
+            window.selectGanttProject = selectGanttProject;
+            window.selectGanttProjectById = selectGanttProjectById;
+            window.createGanttProject = createGanttProject;
+            window.deleteGanttProject = deleteGanttProject;
+            window.editTask = editTask;
+            window.cancelEditTask = cancelEditTask;
+            window.addTaskToProject = addTaskToProject;
+            window.deleteGanttTask = deleteGanttTask;
+            window.loadGanttView = loadGanttView;
+            window.navigateCal = navigateCal;
+            window.goToDate = goToDate;
+            window.saveReminderSettings = saveReminderSettings;
+            window.clearSidebarDateFilter = clearSidebarDateFilter;
+            window.saveSetup = window.saveSetup;
+            
+            const sidebarEl = document.getElementById('sidebar');
+            const mask = document.getElementById('sidebar-mask');
+            document.getElementById('hamburger-btn').addEventListener('click',()=>{ sidebarEl.classList.toggle('open-mobile'); mask.classList.toggle('show'); });
+            mask.addEventListener('click',()=>{ sidebarEl.classList.remove('open-mobile'); mask.classList.remove('show'); });
+            document.querySelectorAll('.sidebar-tab').forEach(tab=>tab.addEventListener('click',function(){ document.querySelectorAll('.sidebar-tab').forEach(t=>t.classList.remove('active')); this.classList.add('active'); document.querySelectorAll('.sidebar-panel').forEach(p=>p.classList.remove('active')); document.getElementById(this.dataset.panel).classList.add('active'); if(this.dataset.panel==='panel-calendar') renderCalendarWidget(); if(this.dataset.panel==='panel-gantt-edit') refreshGanttEditor(); if(this.dataset.panel==='panel-notes') { renderProjects3C(); } }));
+            
+            let touchStartX = 0, touchStartY = 0;
+            document.addEventListener('touchstart', (e) => { if (window.innerWidth > 900) return; const touch = e.touches[0]; touchStartX = touch.clientX; touchStartY = touch.clientY; }, { passive: true });
+            document.addEventListener('touchend', (e) => { if (window.innerWidth > 900) return; const touch = e.changedTouches[0]; const deltaX = touch.clientX - touchStartX; const deltaY = touch.clientY - touchStartY; if (Math.abs(deltaX) > 30 && Math.abs(deltaX) > Math.abs(deltaY) && touchStartX < 20 && deltaX > 0) { sidebarEl.classList.add('open-mobile'); mask.classList.add('show'); } });
+            
+            setupModal.addEventListener('click',(e)=>{ if(e.target===setupModal) setupModal.style.display='none'; });
+            project3cModal.addEventListener('click',(e)=>{ if(e.target===project3cModal) closeProject3C(); });
             initApp();
+            setInterval(()=>saveLocalData(appData),60000);
         })();
     </script>
 </body>
