@@ -478,7 +478,7 @@
             function navigateCal(d){ calMonth+=d; if(calMonth>11){calMonth=0;calYear++;} if(calMonth<0){calMonth=11;calYear--;} renderCalAt(calYear,calMonth); }
             function goToDate(ds, fromSidebar = false){ currentDate = ds; renderDatePanel(); if (fromSidebar) { sidebarNoteFilterDate = ds; document.querySelectorAll('.notes-subtab').forEach(t=>t.classList.remove('active')); const noteTab = document.querySelector('.notes-subtab[data-sub="sub-notes"]'); if(noteTab) noteTab.click(); renderNotesList(); } else { sidebarNoteFilterDate = null; renderNotesList(); if (window.innerWidth <= 900) { document.getElementById('sidebar').classList.remove('open-mobile'); document.getElementById('sidebar-mask').classList.remove('show'); } } renderCalendarWidget(); }
 
-            // 甘特图 (修复日期偏移，并扩展颜色)
+            // 甘特图
             let editingTaskId=null, editingProjectId=null;
             function refreshGanttEditor(){ const sel=document.getElementById('gantt-project-select'), view=document.getElementById('gantt-view-select'); sel.innerHTML='<option value="">-- 选本 --</option>'; view.innerHTML='<option value="">-- 选项目 --</option>'; appData.ganttProjects.forEach(p=>{ sel.innerHTML+=`<option value="${p.id}">${escapeHtml(p.name)}</option>`; view.innerHTML+=`<option value="${p.id}">${escapeHtml(p.name)}</option>`; }); document.getElementById('gantt-project-list').innerHTML = appData.ganttProjects.map(p=>`<div class="gantt-project-item" onclick="selectGanttProjectById('${p.id}')"><span class="project-name">${escapeHtml(p.name)}</span><span class="project-count">${p.tasks.length}任务</span><span class="project-del" onclick="event.stopPropagation();deleteGanttProject('${p.id}')">✕</span></div>`).join('')||'<div style="color:var(--text3);padding:8px;">尚无项目</div>'; if(appData.activeGanttProjectId){ sel.value=appData.activeGanttProjectId; view.value=appData.activeGanttProjectId; renderGanttTasksMini(); } renderGantt(); }
             function selectGanttProject(){ const id=document.getElementById('gantt-project-select').value; if(id){ appData.activeGanttProjectId=id; saveData(appData); refreshGanttEditor(); } }
@@ -499,7 +499,7 @@
                 let min=null,max=null;
                 p.tasks.forEach(t=>{ if(!min||t.startDate<min) min=t.startDate; if(!max||t.endDate>max) max=t.endDate; });
                 const sD=new Date(min), eD=new Date(max);
-                sD.setDate(sD.getDate()-1); // 修复：提前1天而非2天
+                sD.setDate(sD.getDate()-1);
                 eD.setDate(eD.getDate()+3);
                 const days=[];
                 for(let d=new Date(sD); d<=eD; d.setDate(d.getDate()+1)) days.push(d.toISOString().split('T')[0]);
@@ -516,13 +516,67 @@
                 const ti=days.indexOf(today); if(ti>=0) document.getElementById('gantt-viewport').scrollLeft=Math.max(0,(ti-2)*dw);
             }
 
-            // 提醒
+            // ========== 增强提醒：支持浏览器通知 ==========
+            function sendNotification(title, body) {
+                if (window.Notification && Notification.permission === 'granted') {
+                    try {
+                        new Notification(title, { body, icon: 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"%3E%3Ccircle cx="50" cy="50" r="45" fill="%23C9A961" /%3E%3Cpath d="M50 15 L55 40 L80 40 L60 55 L65 80 L50 65 L35 80 L40 55 L20 40 L45 40 Z" fill="%231a1714" /%3E%3C/svg%3E' });
+                    } catch(e) {
+                        showToast(`${title} ${body || ''}`);
+                    }
+                } else {
+                    showToast(`${title} ${body || ''}`);
+                }
+            }
+
             let reminderInterval;
-            function setupReminder(){ if(reminderInterval) clearInterval(reminderInterval); if(appSettings.reminderType==='none') return; reminderInterval=setInterval(()=>{ if(appSettings.reminderType==='random-note' && appData.notes.length) showToast(`📜 ${appData.notes[Math.floor(Math.random()*appData.notes.length)].title}`); else if(appSettings.reminderType==='habit'){ const n=new Date(); const [h,m]=appSettings.habitReminderTime.split(':').map(Number); if(n.getHours()===h&&n.getMinutes()===m) showToast('习惯打卡'); } },60000); }
-            function loadReminderUI(){ document.querySelectorAll('input[name="reminder-type"]').forEach(r=>{ if(r.value===appSettings.reminderType) r.checked=true; }); document.getElementById('random-interval').value=appSettings.randomInterval; document.getElementById('habit-reminder-time').value=appSettings.habitReminderTime; }
-            function saveReminderSettings(){ appSettings.reminderType=document.querySelector('input[name="reminder-type"]:checked').value; appSettings.randomInterval=parseInt(document.getElementById('random-interval').value)||30; appSettings.habitReminderTime=document.getElementById('habit-reminder-time').value||'09:00'; saveSettings(appSettings); setupReminder(); document.getElementById('reminder-dropdown').classList.remove('show'); }
-            document.getElementById('reminder-btn').addEventListener('click',e=>{ e.stopPropagation(); document.getElementById('reminder-dropdown').classList.toggle('show'); loadReminderUI(); });
-            document.addEventListener('click',e=>{ if(!document.getElementById('reminder-dropdown').contains(e.target)) document.getElementById('reminder-dropdown').classList.remove('show'); });
+            function setupReminder(){
+                if(reminderInterval) clearInterval(reminderInterval);
+                if(appSettings.reminderType==='none') return;
+                reminderInterval = setInterval(() => {
+                    if (appSettings.reminderType === 'random-note' && appData.notes.length) {
+                        const note = appData.notes[Math.floor(Math.random() * appData.notes.length)];
+                        sendNotification('📜 随机纪事', note.title);
+                    } else if (appSettings.reminderType === 'habit') {
+                        const now = new Date();
+                        const [h, m] = appSettings.habitReminderTime.split(':').map(Number);
+                        if (now.getHours() === h && now.getMinutes() === m) {
+                            sendNotification('✅ 习惯打卡', '现在是你的习惯时间');
+                        }
+                    }
+                }, 60000);
+            }
+            function loadReminderUI(){
+                document.querySelectorAll('input[name="reminder-type"]').forEach(r=>{ if(r.value===appSettings.reminderType) r.checked=true; });
+                document.getElementById('random-interval').value = appSettings.randomInterval;
+                document.getElementById('habit-reminder-time').value = appSettings.habitReminderTime;
+            }
+            function saveReminderSettings(){
+                appSettings.reminderType = document.querySelector('input[name="reminder-type"]:checked').value;
+                appSettings.randomInterval = parseInt(document.getElementById('random-interval').value) || 30;
+                appSettings.habitReminderTime = document.getElementById('habit-reminder-time').value || '09:00';
+                saveSettings(appSettings);
+                // 请求通知权限（如果尚未决定）
+                if (window.Notification && Notification.permission !== 'granted' && Notification.permission !== 'denied') {
+                    Notification.requestPermission().then(perm => {
+                        if (perm === 'granted') {
+                            showToast('通知权限已开启');
+                        }
+                    });
+                }
+                setupReminder();
+                document.getElementById('reminder-dropdown').classList.remove('show');
+            }
+            document.getElementById('reminder-btn').addEventListener('click', e => {
+                e.stopPropagation();
+                document.getElementById('reminder-dropdown').classList.toggle('show');
+                loadReminderUI();
+            });
+            document.addEventListener('click', e => {
+                if (!document.getElementById('reminder-dropdown').contains(e.target)) {
+                    document.getElementById('reminder-dropdown').classList.remove('show');
+                }
+            });
 
             function refreshAllUI(){ renderDatePanel(); renderTodos(); renderProjects3C(); renderNotesList(); renderReviewList(); renderCalendarWidget(); refreshGanttEditor(); renderGantt(); setupReminder(); loadReminderUI(); }
 
