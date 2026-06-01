@@ -495,7 +495,7 @@
             document.getElementById('reminder-toggle-btn').addEventListener('click', () => {
                 rightSidebar.classList.toggle('collapsed');
                 rightSidebarMask.classList.toggle('show');
-                if (!rightSidebar.classList.contains('collapsed')) renderRightSidebar();
+                renderRightSidebar();
             });
             rightSidebarMask.addEventListener('click', () => {
                 rightSidebar.classList.add('collapsed');
