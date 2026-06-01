@@ -66,6 +66,8 @@
         .sidebar-tab:hover, .sidebar-tab.active { color:var(--accent); border-bottom-color:var(--accent); }
         .sidebar-panel { flex:1; overflow-y:auto; display:none; flex-direction:column; padding:12px; }
         .sidebar-panel.active { display:flex; }
+
+        /* 右侧栏样式修正 */
         .right-sidebar { width:var(--right-sidebar-w); height:100vh; background:var(--surface); backdrop-filter:var(--frosted-glass); border-left:1px solid var(--border); display:flex; flex-direction:column; transition:transform 0.35s; z-index:100; flex-shrink:0; box-shadow:var(--shadow-panel); position:relative; }
         .right-sidebar::before { content:''; position:absolute; top:0; left:0; width:1px; height:100%; background:var(--accent); opacity:0.15; }
         .right-sidebar.collapsed { transform:translateX(100%); width:0; }
@@ -78,6 +80,7 @@
         .reminder-item .reminder-info { flex:1; font-size:13px; }
         .reminder-item .reminder-del { cursor:pointer; color:#8B0000; opacity:0.6; }
         .reminder-item .reminder-del:hover { opacity:1; }
+
         .notes-subtabs { display:flex; border-bottom:1px solid var(--border); margin-bottom:12px; }
         .notes-subtab { flex:1; padding:8px 4px; text-align:center; cursor:pointer; font-size:12px; color:var(--text3); border-bottom:1px solid transparent; transition:var(--transition); letter-spacing:1px; }
         .notes-subtab:hover, .notes-subtab.active { color:var(--accent); border-bottom-color:var(--accent); }
@@ -203,6 +206,7 @@
         <div class="loading-quote" id="loading-quote-text">归拢时序，拂去尘埃……</div>
     </div>
 
+    <!-- 左侧栏 -->
     <div class="sidebar-mask" id="sidebar-mask"></div>
     <aside class="sidebar" id="sidebar">
         <div class="sidebar-tabs">
@@ -237,6 +241,7 @@
         </div>
     </aside>
 
+    <!-- 右侧栏 -->
     <div class="right-sidebar-mask" id="right-sidebar-mask"></div>
     <aside class="right-sidebar collapsed" id="right-sidebar">
         <div class="right-sidebar-tabs">
@@ -282,6 +287,7 @@
         </div>
     </div>
 
+    <!-- 弹窗 -->
     <div class="modal-overlay" id="project-3c-modal" style="display:none;"><div class="modal"><h3>编辑工程</h3><input type="text" id="project-3c-name"><textarea id="project-3c-concentration" placeholder="浓缩点…"></textarea><textarea id="project-3c-capture" placeholder="抓点…"></textarea><div class="btn-row"><button class="btn btn-outline" onclick="closeProject3C()">取消</button><button class="btn btn-accent" onclick="saveProject3C()">保存</button></div></div></div>
     <div class="modal-overlay" id="note-modal" style="display:none;"><div class="modal"><h3 id="note-modal-title">新建纪事</h3><input type="text" id="note-title-input"><div class="tag-list" id="note-type-tags"><span class="tag-chip selected" data-type="note">📜 纪事</span><span class="tag-chip" data-type="code">⌨️ 代码</span></div><textarea id="note-content-input"></textarea><input type="text" id="note-tags-input" placeholder="标签"><div class="btn-row"><button class="btn btn-outline" onclick="closeNoteEditor()">取消</button><button class="btn btn-accent" onclick="saveNote()">保存</button></div></div></div>
     <div class="modal-overlay" id="review-modal" style="display:none;"><div class="modal"><h3>夜间复盘 <span id="review-date-label"></span></h3><div><strong>目标</strong><textarea id="review-goal"></textarea></div><div><strong>经历</strong><textarea id="review-experience"></textarea></div><div><strong>问题</strong><textarea id="review-problem"></textarea></div><div><strong>改变</strong><textarea id="review-change"></textarea></div><div><strong>习惯律动：</strong><div id="habit-check-list"></div><button class="btn btn-outline" onclick="addHabitPrompt()">＋ 添加习惯</button></div><div class="btn-row"><button class="btn btn-outline" onclick="closeReviewModal()">取消</button><button class="btn btn-accent" onclick="saveReview()">铭记复盘</button></div></div></div>
@@ -376,7 +382,7 @@
             const todoReminderModal = document.getElementById('todo-reminder-modal');
             const scheduleModal = document.getElementById('schedule-modal');
 
-            const loadingPhrases = { init: ["归拢时序，拂去尘埃……", "司辰，书页正在展开。", "拾取记忆的碎屑……"], sync: ["正从星尘中取回残响……", "链接「箱子」深处……"], offline: ["烛火已燃，离线书写。"] };
+            const loadingPhrases = { init: ["归拢时序，拂去尘埃……", "司辰，书页正在展开。"], sync: ["正从星尘中取回残响……", "链接「箱子」深处……"], offline: ["烛火已燃，离线书写。"] };
             let loadingInterval = null;
             function startLoadingAnim(phase='init') { if(loadingInterval) clearInterval(loadingInterval); let messages=loadingPhrases[phase]||loadingPhrases.init; let idx=0; document.getElementById('loading-quote-text').textContent=messages[0]; loadingInterval=setInterval(()=>{ idx=(idx+1)%messages.length; document.getElementById('loading-quote-text').textContent=messages[idx]; },1800); loadingVeil.classList.remove('hide'); loadingVeil.style.display='flex'; window.dispatchEvent(new Event('resize')); }
             function stopLoadingAndHide() { if(loadingInterval) clearInterval(loadingInterval); loadingVeil.classList.add('hide'); setTimeout(()=>{ if(loadingVeil) loadingVeil.style.display='none'; },450); }
@@ -489,10 +495,26 @@
             // ========== 刷新 ==========
             function refreshAllUI(){ renderDatePanel(); renderTodos(); renderProjects3C(); renderNotesList(); renderReviewList(); renderCalendarWidget(); refreshGanttEditor(); renderRightSidebar(); setupReminder(); }
 
-            // ========== 侧栏与右侧栏交互 ==========
-            document.getElementById('reminder-toggle-btn').addEventListener('click', ()=>{ document.getElementById('right-sidebar').classList.toggle('collapsed'); document.getElementById('right-sidebar-mask').classList.toggle('show'); renderRightSidebar(); });
-            document.getElementById('right-sidebar-mask').addEventListener('click', ()=>{ document.getElementById('right-sidebar').classList.add('collapsed'); document.getElementById('right-sidebar-mask').classList.remove('show'); });
-            document.querySelectorAll('.right-sidebar-tab').forEach(tab=>{ tab.addEventListener('click', function(){ document.querySelectorAll('.right-sidebar-tab').forEach(t=>t.classList.remove('active')); this.classList.add('active'); document.querySelectorAll('.right-sidebar-panel').forEach(p=>p.style.display='none'); document.getElementById(this.dataset.rpanel).style.display='block'; }); });
+            // ========== 右侧栏交互修正 ==========
+            const rightSidebar = document.getElementById('right-sidebar');
+            const rightSidebarMask = document.getElementById('right-sidebar-mask');
+            document.getElementById('reminder-toggle-btn').addEventListener('click', () => {
+                rightSidebar.classList.toggle('collapsed');
+                rightSidebarMask.classList.toggle('show');
+                renderRightSidebar();
+            });
+            rightSidebarMask.addEventListener('click', () => {
+                rightSidebar.classList.add('collapsed');
+                rightSidebarMask.classList.remove('show');
+            });
+            document.querySelectorAll('.right-sidebar-tab').forEach(tab => {
+                tab.addEventListener('click', function() {
+                    document.querySelectorAll('.right-sidebar-tab').forEach(t => t.classList.remove('active'));
+                    this.classList.add('active');
+                    document.querySelectorAll('.right-sidebar-panel').forEach(p => p.style.display = 'none');
+                    document.getElementById(this.dataset.rpanel).style.display = 'block';
+                });
+            });
 
             // ========== 启动 ==========
             async function initApp() {
@@ -532,6 +554,7 @@
             window.saveSetup = window.saveSetup;
             window.clearSidebarDateFilter = function() { sidebarNoteFilterDate = null; renderNotesList(); };
 
+            // 左侧栏交互
             const sidebarEl = document.getElementById('sidebar'); const mask = document.getElementById('sidebar-mask');
             document.getElementById('hamburger-btn').addEventListener('click',()=>{ sidebarEl.classList.toggle('open-mobile'); mask.classList.toggle('show'); });
             mask.addEventListener('click',()=>{ sidebarEl.classList.remove('open-mobile'); mask.classList.remove('show'); });
