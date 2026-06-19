@@ -194,6 +194,21 @@
         .note-preview-item:hover { background:var(--accent-light); padding-left:8px; }
         .toast { position:fixed; bottom:32px; right:32px; background:var(--accent); color:var(--bg); padding:12px 24px; border-radius:2px; font-size:14px; z-index:999; box-shadow:var(--shadow-lg); }
 
+        /* ── 秘书聊天面板 ── */
+        .chat-panel { display:flex; flex-direction:column; height:100%; }
+        .chat-messages { flex:1; overflow-y:auto; padding:8px 0; display:flex; flex-direction:column; gap:8px; }
+        .chat-msg { max-width:90%; padding:10px 14px; border-radius:2px; font-size:13px; line-height:1.6; animation:fadeInUp 0.3s; }
+        .chat-msg.user { align-self:flex-end; background:var(--accent); color:var(--bg); border-bottom-right-radius:0; }
+        .chat-msg.assistant { align-self:flex-start; background:var(--surface2); color:var(--text); border:1px solid var(--border); border-bottom-left-radius:0; }
+        .chat-msg.assistant.streaming { border-left:2px solid var(--accent); }
+        .chat-msg .msg-time { font-size:10px; opacity:0.5; margin-top:4px; }
+        .chat-input-row { display:flex; gap:6px; padding:8px 0 0; border-top:1px solid var(--border); }
+        .chat-input-row input { flex:1; }
+        .chat-input-row button { padding:8px 16px; }
+        .chat-status { font-size:10px; color:var(--text3); text-align:center; padding:4px; }
+        .chat-welcome { text-align:center; padding:20px; color:var(--text3); font-style:italic; letter-spacing:1px; }
+        @keyframes fadeInUp { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+
         /* 右侧提醒栏 */
         .reminder-sidebar { position:fixed; top:0; right:0; width:var(--sidebar-w); height:100vh; background:var(--surface); backdrop-filter:var(--frosted-glass); border-left:1px solid var(--border); display:flex; flex-direction:column; box-shadow:var(--shadow-panel); z-index:200; transform:translateX(100%); transition:transform 0.35s; padding-top:var(--safe-top); }
         .reminder-sidebar.open { transform:translateX(0); }
@@ -247,6 +262,7 @@
             <div class="sidebar-tab active" data-panel="panel-notes">纪事</div>
             <div class="sidebar-tab" data-panel="panel-calendar">月历</div>
             <div class="sidebar-tab" data-panel="panel-gantt-edit">时序</div>
+            <div class="sidebar-tab" data-panel="panel-secretary">秘书</div>
         </div>
         <div class="sidebar-panel active" id="panel-notes">
             <div class="notes-subtabs">
@@ -290,6 +306,17 @@
                 <option value="#3A5C5C">深海青</option>
                 <option value="#7E8B92">尘灰银</option>
             </select><button class="btn btn-accent" id="task-save-btn" onclick="addTaskToProject()">添加</button><button class="btn btn-outline" id="task-cancel-btn" onclick="cancelEditTask()" style="display:none;">取消</button></div><div id="gantt-tasks-mini-list"></div></div>
+        </div>
+        <div class="sidebar-panel" id="panel-secretary">
+            <div class="chat-panel">
+                <div class="chat-welcome" id="chat-welcome">司辰的私人管家，请吩咐。</div>
+                <div class="chat-messages" id="chat-messages"></div>
+                <div class="chat-status" id="chat-status"></div>
+                <div class="chat-input-row">
+                    <input type="text" id="chat-input" placeholder="向管家提问…" autocomplete="off">
+                    <button class="btn btn-accent" id="chat-send-btn" onclick="sendChat()">发送</button>
+                </div>
+            </div>
         </div>
     </aside>
 
@@ -701,6 +728,79 @@
             window.saveSetup = window.saveSetup; window.deleteTodoReminder = window.deleteTodoReminder; window.deleteRoutine = window.deleteRoutine; window.addRoutineReminder = window.addRoutineReminder;
 
             document.querySelectorAll('.sidebar-tab').forEach(tab=>tab.addEventListener('click',function(){ document.querySelectorAll('.sidebar-tab').forEach(t=>t.classList.remove('active')); this.classList.add('active'); document.querySelectorAll('.sidebar-panel').forEach(p=>p.classList.remove('active')); document.getElementById(this.dataset.panel).classList.add('active'); if(this.dataset.panel==='panel-calendar')renderCalendarWidget(); if(this.dataset.panel==='panel-gantt-edit')refreshGanttEditor(); }));
+
+            /* ══════ 秘书聊天 ══════ */
+            const SECRETARY_URL = 'http://localhost:8742/v1/chat/completions';
+            let chatHistory = [];
+
+            function buildPKMContext() {
+                let goals = appData.projects3C || [];
+                let todos = (appData.todos || []).filter(t=>!t.completed).slice(0,20);
+                let activeGoals = goals.filter(g=>g.status!=='completed').map(g=>`- ${g.name} (${g.progress||0}%)`).join('\n') || '(无)';
+                let pendingTodos = todos.map(t=>`- [${t.priority||'mid'}] ${t.title}${t.deadline?' ⏰'+t.deadline:''}`).join('\n') || '(无)';
+                let recentNotes = (appData.notes||[]).slice(-5).map(n=>`- ${n.title||n.content?.slice(0,40)}`).join('\n') || '(无)';
+                return `【用户当前数据】
+活跃目标:
+${activeGoals}
+
+待办事项:
+${pendingTodos}
+
+最近笔记:
+${recentNotes}
+
+当前日期: ${new Date().toLocaleDateString('zh-CN')}`;
+            }
+
+            function addChatMsg(role, text) {
+                let div = document.createElement('div');
+                div.className = 'chat-msg ' + role;
+                div.innerHTML = text.replace(/\n/g,'<br>') + '<div class="msg-time">'+new Date().toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'})+'</div>';
+                document.getElementById('chat-messages').appendChild(div);
+                div.scrollIntoView({behavior:'smooth'});
+                return div;
+            }
+
+            async function sendChat() {
+                let input = document.getElementById('chat-input');
+                let btn = document.getElementById('chat-send-btn');
+                let msg = input.value.trim();
+                if(!msg) return;
+                input.value = ''; input.disabled = true; btn.disabled = true;
+                document.getElementById('chat-welcome').style.display = 'none';
+                document.getElementById('chat-status').textContent = '管家思考中…';
+
+                addChatMsg('user', msg);
+                let ctx = buildPKMContext();
+                let msgs = [
+                    {role:'system', content:'你是 Hypomnema 司辰的私人管家。你只能读取用户 PKM 数据，提供建议与分析——不能执行任何操作，不能操作文件。风格：简洁、温暖、有洞察。当数据中有冲突或遗漏时主动提醒。用中文回复。\n\n' + ctx},
+                    ...chatHistory.slice(-10),
+                    {role:'user', content: msg}
+                ];
+
+                try {
+                    let resp = await fetch(SECRETARY_URL, {
+                        method:'POST',
+                        headers:{'Content-Type':'application/json'},
+                        body: JSON.stringify({model:'deepseek-v4-flash', messages:msgs, stream:false, max_tokens:1024})
+                    });
+                    if(!resp.ok) throw new Error('API '+resp.status);
+                    let data = await resp.json();
+                    let reply = data.choices?.[0]?.message?.content || '（管家沉默了…）';
+                    addChatMsg('assistant', reply);
+                    chatHistory.push({role:'user',content:msg}, {role:'assistant',content:reply});
+                    if(chatHistory.length > 20) chatHistory = chatHistory.slice(-20);
+                    document.getElementById('chat-status').textContent = '';
+                } catch(e) {
+                    document.getElementById('chat-status').textContent = '⚠ 无法连接管家 (localhost:8742)';
+                    addChatMsg('assistant', '抱歉，目前无法连接管家服务。请确认 Hermes secretary profile 已启动。');
+                }
+                input.disabled = false; btn.disabled = false;
+                input.focus();
+            }
+
+            document.getElementById('chat-input').addEventListener('keydown', e => { if(e.key==='Enter') sendChat(); });
+            window.sendChat = sendChat;
 
             setupModal.addEventListener('click',e=>{ if(e.target===setupModal) setupModal.style.display='none'; });
             project3cModal.addEventListener('click',e=>{ if(e.target===project3cModal) closeProject3C(); });
