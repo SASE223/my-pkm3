@@ -1,0 +1,70 @@
+name: 定时推送提醒
+
+on:
+  schedule:
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  remind:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 检出 gh-pages 分支
+        uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+
+      - name: Bark 定时推送
+        env:
+          BARK_KEY: ${{ secrets.BARK_KEY }}
+        run: |
+          python3 - <<'PY'
+          import json, os, sys
+          from datetime import datetime, timedelta
+          from urllib.request import Request, urlopen
+
+          key = os.environ.get('BARK_KEY', '').strip()
+          if not key:
+              print('::error::BARK_KEY secret 未配置')
+              sys.exit(1)
+
+          # 北京时间 = UTC + 8h
+          now = datetime.utcnow() + timedelta(hours=8)
+          hhmm = now.strftime('%H:%M')
+          hour = now.hour
+          if hour < 8 or hour > 23:
+              print(f'北京时间 {hhmm} 不在 08:00-23:00 推送时段，跳过')
+              sys.exit(0)
+
+          try:
+              with open('reminders.json', encoding='utf-8') as f:
+                  reminders = json.load(f)
+          except FileNotFoundError:
+              print('reminders.json 不存在，跳过')
+              sys.exit(0)
+          except Exception as e:
+              print(f'::error::解析 reminders.json 失败: {e}')
+              sys.exit(1)
+
+          matched = [r for r in reminders if str(r.get('time', '')) == hhmm]
+          if not matched:
+              print(f'北京时间 {hhmm} 无匹配提醒')
+              sys.exit(0)
+
+          for r in matched:
+              payload = json.dumps({
+                  'title': r.get('title') or '定时提醒',
+                  'body': r.get('body') or '司辰定时提醒',
+              }, ensure_ascii=False).encode('utf-8')
+              req = Request(
+                  f'https://api.day.app/{key}',
+                  data=payload,
+                  headers={'Content-Type': 'application/json; charset=utf-8'},
+                  method='POST',
+              )
+              with urlopen(req, timeout=15) as resp:
+                  print(f'推送成功: {r.get("title")} (HTTP {resp.status})')
+          PY
