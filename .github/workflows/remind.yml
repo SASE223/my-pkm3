@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   remind:
@@ -33,7 +33,10 @@ jobs:
 
           # 北京时间 = UTC + 8h
           now = datetime.utcnow() + timedelta(hours=8)
+          today = now.strftime('%Y-%m-%d')
           hhmm = now.strftime('%H:%M')
+          # Python weekday(): 0=周一..6=周日 -> 前端 JS getDay(): 0=周日..6=周六
+          js_weekday = [6, 0, 1, 2, 3, 4, 5][now.weekday()]
           hour = now.hour
           if hour < 8 or hour > 23:
               print(f'北京时间 {hhmm} 不在 08:00-23:00 推送时段，跳过')
@@ -49,16 +52,10 @@ jobs:
               print(f'::error::解析 reminders.json 失败: {e}')
               sys.exit(1)
 
-          matched = [r for r in reminders if str(r.get('time', '')) == hhmm]
-          if not matched:
-              print(f'北京时间 {hhmm} 无匹配提醒')
-              sys.exit(0)
+          changed = False
 
-          for r in matched:
-              payload = json.dumps({
-                  'title': r.get('title') or '定时提醒',
-                  'body': r.get('body') or '司辰定时提醒',
-              }, ensure_ascii=False).encode('utf-8')
+          def send_bark(title, body):
+              payload = json.dumps({'title': title, 'body': body}, ensure_ascii=False).encode('utf-8')
               req = Request(
                   f'https://api.day.app/{key}',
                   data=payload,
@@ -66,5 +63,63 @@ jobs:
                   method='POST',
               )
               with urlopen(req, timeout=15) as resp:
-                  print(f'推送成功: {r.get("title")} (HTTP {resp.status})')
+                  if resp.status >= 400:
+                      raise RuntimeError(f'HTTP {resp.status}')
+                  print(f'推送成功: {title} (HTTP {resp.status})')
+
+          for r in reminders:
+              typ = r.get('type')
+              if typ == 'review':
+                  intervals = r.get('intervals') or [1, 3, 7, 15, 30]
+                  if not isinstance(intervals, list) or not intervals:
+                      print(f'::error::复习提醒间隔无效: {r.get("title")}')
+                      continue
+                  try:
+                      y, m, d = map(int, str(r.get('lastReview') or today).split('-'))
+                      last_review = datetime(y, m, d)
+                      next_idx = min(int(r.get('nextIdx', 0)), len(intervals) - 1)
+                      due = last_review + timedelta(days=int(intervals[next_idx]))
+                      if due.date() <= now.date() and r.get('lastPushed') != today:
+                          send_bark(r.get('title') or '复习提醒', r.get('body') or f'到复习时间了：{r.get("title")}')
+                          r['lastPushed'] = today
+                          changed = True
+                  except Exception as e:
+                      print(f'::error::复习提醒计算失败 {r.get("title")}: {e}')
+              elif typ == 'oneshot':
+                  try:
+                      at = datetime.strptime(r.get('at') or '', '%Y-%m-%dT%H:%M')
+                      if at <= now and not r.get('done'):
+                          send_bark(r.get('title') or '定时任务', r.get('body') or f'任务时间到：{r.get("title")}')
+                          r['done'] = True
+                          changed = True
+                  except Exception as e:
+                      print(f'::error::定时任务解析失败 {r.get("title")}: {e}')
+              elif typ == 'habit':
+                  days = r.get('days') or []
+                  if js_weekday in days and r.get('time') == hhmm and r.get('lastPushed') != today:
+                      send_bark(r.get('title') or '习惯提醒', r.get('body') or f'该执行习惯了：{r.get("title")}')
+                      r['lastPushed'] = today
+                      changed = True
+              else:
+                  print(f'跳过未知类型提醒: {typ or "无 type"}')
+
+          if not changed:
+              print(f'北京时间 {hhmm} 无匹配提醒')
+          else:
+              with open('reminders.json', 'w', encoding='utf-8') as f:
+                  json.dump(reminders, f, ensure_ascii=False, indent=2)
           PY
+
+      - name: 写回提醒状态到 gh-pages
+        if: always()
+        run: |
+          if git status --porcelain -- reminders.json | grep -q 'reminders.json'; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add reminders.json
+            git commit -m "chore: 更新提醒推送状态 [skip ci]"
+            git push origin HEAD:gh-pages
+            echo "已写回提醒状态"
+          else
+            echo "reminders.json 无变更"
+          fi
