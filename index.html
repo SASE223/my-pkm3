@@ -209,6 +209,9 @@
         .push-reminder-del { cursor:pointer; color:#8B0000; opacity:0.7; font-size:14px; }
         .push-reminder-del:hover { opacity:1; }
         .push-hint { font-size:10px; color:var(--text3); line-height:1.8; margin-top:8px; }
+        .push-row .push-day-btn { flex:1; padding:8px 0; font-size:12px; border:1px solid var(--border); background:transparent; color:var(--text3); cursor:pointer; letter-spacing:1px; border-radius:1px; transition:all 0.2s; }
+        .push-row .push-day-btn.active { background:var(--accent); border-color:var(--accent); color:var(--bg); }
+        .push-reminder-item .btn { padding:5px 10px; font-size:11px; }
 
         .chat-panel { display:flex; flex-direction:column; height:100%; }
         .chat-messages { flex:1; overflow-y:auto; padding:8px 0; display:flex; flex-direction:column; gap:8px; }
@@ -345,13 +348,42 @@
                 </div>
             </div>
             <div class="push-section">
-                <div class="push-section-title">本地定时提醒</div>
+                <div class="push-section-title">复习提醒</div>
                 <div class="push-row">
-                    <input type="text" id="push-reminder-text" placeholder="提醒内容" autocomplete="off">
-                    <input type="number" id="push-reminder-min" placeholder="N 分钟后" min="1" max="1440">
-                    <button class="btn btn-accent" onclick="addPushReminder()">＋</button>
+                    <input type="text" id="push-review-title" placeholder="复习内容" autocomplete="off">
+                    <input type="text" id="push-review-intervals" placeholder="间隔天数 1,3,7,15,30" autocomplete="off">
+                    <button class="btn btn-accent" onclick="addReviewReminder()">＋</button>
                 </div>
-                <div id="push-reminder-list"></div>
+                <div class="push-hint">默认间隔 1,3,7,15,30 天，可自定义如 1,2,4,7,15,30。添加后以今天为起点，到期提醒一次，点击「已复习」进入下一间隔。</div>
+                <div id="push-review-list"></div>
+            </div>
+            <div class="push-section">
+                <div class="push-section-title">定时任务</div>
+                <div class="push-row">
+                    <input type="text" id="push-oneshot-title" placeholder="任务标题" autocomplete="off">
+                    <input type="date" id="push-oneshot-date">
+                    <input type="time" id="push-oneshot-time">
+                    <button class="btn btn-accent" onclick="addOneshotReminder()">＋</button>
+                </div>
+                <div id="push-oneshot-list"></div>
+            </div>
+            <div class="push-section">
+                <div class="push-section-title">习惯提醒</div>
+                <div class="push-row">
+                    <input type="text" id="push-habit-title" placeholder="习惯名称" autocomplete="off">
+                    <input type="time" id="push-habit-time">
+                    <button class="btn btn-accent" onclick="addHabitReminder()">＋</button>
+                </div>
+                <div class="push-row" id="push-habit-days">
+                    <button type="button" class="push-day-btn" data-day="1" onclick="toggleHabitDay(this)">一</button>
+                    <button type="button" class="push-day-btn" data-day="2" onclick="toggleHabitDay(this)">二</button>
+                    <button type="button" class="push-day-btn" data-day="3" onclick="toggleHabitDay(this)">三</button>
+                    <button type="button" class="push-day-btn" data-day="4" onclick="toggleHabitDay(this)">四</button>
+                    <button type="button" class="push-day-btn" data-day="5" onclick="toggleHabitDay(this)">五</button>
+                    <button type="button" class="push-day-btn" data-day="6" onclick="toggleHabitDay(this)">六</button>
+                    <button type="button" class="push-day-btn" data-day="0" onclick="toggleHabitDay(this)">日</button>
+                </div>
+                <div id="push-habit-list"></div>
             </div>
             <div class="push-section">
                 <div class="push-section-title">GitHub Actions</div>
@@ -890,29 +922,143 @@ ${recentNotes}
                     .catch(e=>{ s.textContent='✗ 推送失败: '+e.message; s.className='push-status err'; });
             };
 
-            window.addPushReminder = function(){
-                let text = document.getElementById('push-reminder-text').value.trim();
-                let min = parseInt(document.getElementById('push-reminder-min').value, 10);
-                if(!text){ showToast('请填写提醒内容'); return; }
-                if(!min || min <= 0 || min > 1440){ showToast('分钟数无效（1-1440）'); return; }
-                let dueAt = new Date(Date.now() + min*60000).toISOString();
+            function pad2(n){ return String(n).padStart(2,'0'); }
+            function todayStr(d){ d = d || new Date(); return d.getFullYear()+'-'+pad2(d.getMonth()+1)+'-'+pad2(d.getDate()); }
+            function hhmmStr(d){ d = d || new Date(); return pad2(d.getHours())+':'+pad2(d.getMinutes()); }
+            function parseYmd(s){ if(!/^\d{4}-\d{2}-\d{2}$/.test(s||'')) return null; let m=s.split('-').map(Number); return new Date(m[0], m[1]-1, m[2]); }
+            function parseLocalAt(s){ let m=/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})$/.exec(s||''); if(!m) return null; return new Date(+m[1], +m[2]-1, +m[3], +m[4], +m[5]); }
+            function addDays(d, n){ return new Date(d.getFullYear(), d.getMonth(), d.getDate()+n); }
+
+            function reviewDueToday(r){
+                if(r.done) return false;
+                let last = parseYmd(r.lastReview);
+                if(!last) return false;
+                let intervals = Array.isArray(r.intervals) && r.intervals.length ? r.intervals : [1,3,7,15,30];
+                let idx = Math.max(0, Math.min(r.nextIdx || 0, intervals.length-1));
+                let due = addDays(last, intervals[idx] || 1);
+                return todayStr() >= todayStr(due) && r.lastPushed !== todayStr();
+            }
+            function oneshotDue(r){
+                if(r.done) return false;
+                let at = parseLocalAt(r.at);
+                return !!at && Date.now() >= at.getTime();
+            }
+            function habitDue(r){
+                let d = new Date();
+                let days = Array.isArray(r.days) ? r.days : [];
+                return days.indexOf(d.getDay()) !== -1 && hhmmStr(d) === (r.time||'') && r.lastPushed !== todayStr();
+            }
+
+            window.addReviewReminder = function(){
+                let title = document.getElementById('push-review-title').value.trim();
+                let text = document.getElementById('push-review-intervals').value.trim();
+                let intervals = text ? text.split(/[,，、\s]+/).map(s=>parseInt(s,10)).filter(n=>Number.isFinite(n) && n > 0) : [1,3,7,15,30];
+                if(!title){ showToast('请填写复习内容'); return; }
+                if(!intervals.length){ showToast('复习间隔无效，请填写正整数'); return; }
+                intervals = [...new Set(intervals)].sort((a,b)=>a-b);
                 let list = loadPushReminders();
-                list.push({id:genId(), title:text, dueAt:dueAt, done:false});
+                list.push({id:genId(), type:'review', title:title, body:'到复习时间了：'+title, intervals:intervals, lastReview:todayStr(), nextIdx:0});
                 savePushReminders(list);
-                document.getElementById('push-reminder-text').value='';
-                document.getElementById('push-reminder-min').value='';
+                document.getElementById('push-review-title').value='';
+                document.getElementById('push-review-intervals').value='';
                 renderPushReminders();
-                showToast('已添加，'+min+' 分钟后推送');
+                showToast('已添加复习提醒');
             };
 
-            function renderPushReminders(){
-                let c = document.getElementById('push-reminder-list');
-                if(!c) return;
+            window.reviewDone = function(id){
                 let list = loadPushReminders();
-                c.innerHTML = list.length ? list.map(r=>{
-                    let t = new Date(r.dueAt).toLocaleString('zh-CN',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});
-                    return '<div class="push-reminder-item"><div class="push-reminder-info"><div>'+escapeHtml(r.title)+'</div><div class="push-reminder-time">'+t+(r.done?' · 已推送':'')+'</div></div><span class="push-reminder-del" onclick="deletePushReminder(\''+r.id+'\')">✕</span></div>';
-                }).join('') : '<div style="padding:12px 0;color:var(--text3);font-size:12px;">暂无提醒</div>';
+                let r = list.find(x=>x.id===id);
+                if(!r || r.type!=='review') return;
+                let intervals = Array.isArray(r.intervals) && r.intervals.length ? r.intervals : [1,3,7,15,30];
+                let wasAtTop = (r.nextIdx||0) >= intervals.length-1;
+                r.lastReview = todayStr();
+                r.nextIdx = Math.min((r.nextIdx||0)+1, intervals.length-1);
+                delete r.lastPushed;
+                if(wasAtTop) r.done = true;
+                savePushReminders(list);
+                renderPushReminders();
+                showToast(r.done ? '复习计划已完成并归档' : '已记录复习，进入下一间隔');
+            };
+
+            window.addOneshotReminder = function(){
+                let title = document.getElementById('push-oneshot-title').value.trim();
+                let date = document.getElementById('push-oneshot-date').value;
+                let time = document.getElementById('push-oneshot-time').value;
+                if(!title){ showToast('请填写任务标题'); return; }
+                if(!date || !time){ showToast('请选择日期和时间'); return; }
+                if(!/^\d{4}-\d{2}-\d{2}$/.test(date) || !/^\d{2}:\d{2}$/.test(time)){ showToast('日期或时间格式无效'); return; }
+                let list = loadPushReminders();
+                list.push({id:genId(), type:'oneshot', title:title, at:date+'T'+time, done:false});
+                savePushReminders(list);
+                document.getElementById('push-oneshot-title').value='';
+                document.getElementById('push-oneshot-date').value='';
+                document.getElementById('push-oneshot-time').value='';
+                renderPushReminders();
+                showToast('已添加定时任务：'+date+' '+time);
+            };
+
+            window.toggleHabitDay = function(btn){ btn.classList.toggle('active'); };
+
+            function selectedHabitDays(){
+                let out = [];
+                document.querySelectorAll('#push-habit-days .push-day-btn.active').forEach(b=>out.push(parseInt(b.dataset.day,10)));
+                return out;
+            }
+
+            window.addHabitReminder = function(){
+                let title = document.getElementById('push-habit-title').value.trim();
+                let time = document.getElementById('push-habit-time').value;
+                let days = selectedHabitDays();
+                if(!title){ showToast('请填写习惯名称'); return; }
+                if(!time || !/^\d{2}:\d{2}$/.test(time)){ showToast('请选择提醒时间'); return; }
+                if(!days.length){ showToast('请至少选择一天'); return; }
+                let list = loadPushReminders();
+                list.push({id:genId(), type:'habit', title:title, time:time, days:days, lastPushed:''});
+                savePushReminders(list);
+                document.getElementById('push-habit-title').value='';
+                document.getElementById('push-habit-time').value='';
+                document.querySelectorAll('#push-habit-days .push-day-btn.active').forEach(b=>b.classList.remove('active'));
+                renderPushReminders();
+                showToast('已添加习惯提醒');
+            };
+
+            const WEEK_CN = ['日','一','二','三','四','五','六'];
+
+            function renderPushReminders(){
+                let list = loadPushReminders();
+                renderReviewReminders(list.filter(r=>r.type==='review' && !r.done));
+                renderOneshotReminders(list.filter(r=>r.type==='oneshot' && !r.done));
+                renderHabitReminders(list.filter(r=>r.type==='habit'));
+            }
+
+            function renderReviewReminders(items){
+                let c = document.getElementById('push-review-list');
+                if(!c) return;
+                c.innerHTML = items.length ? items.map(r=>{
+                    let intervals = Array.isArray(r.intervals) && r.intervals.length ? r.intervals : [1,3,7,15,30];
+                    let idx = Math.max(0, Math.min(r.nextIdx || 0, intervals.length-1));
+                    let next = todayStr(addDays(parseYmd(r.lastReview)||new Date(), intervals[idx]||1));
+                    let overdue = todayStr() >= next;
+                    return '<div class="push-reminder-item"><div class="push-reminder-info"><div>'+escapeHtml(r.title)+'</div><div class="push-reminder-time">第 '+(idx+1)+'/'+intervals.length+' 次间隔 · 下次 '+next+(overdue?' · 已到期':'')+'</div></div><button class="btn" onclick="reviewDone(\''+r.id+'\')">已复习</button><span class="push-reminder-del" onclick="deletePushReminder(\''+r.id+'\')">✕</span></div>';
+                }).join('') : '<div style="padding:12px 0;color:var(--text3);font-size:12px;">暂无复习提醒</div>';
+            }
+
+            function renderOneshotReminders(items){
+                let c = document.getElementById('push-oneshot-list');
+                if(!c) return;
+                c.innerHTML = items.length ? items.map(r=>{
+                    let t = (r.at||'').replace('T',' ');
+                    return '<div class="push-reminder-item"><div class="push-reminder-info"><div>'+escapeHtml(r.title)+'</div><div class="push-reminder-time">'+t+'</div></div><span class="push-reminder-del" onclick="deletePushReminder(\''+r.id+'\')">✕</span></div>';
+                }).join('') : '<div style="padding:12px 0;color:var(--text3);font-size:12px;">暂无定时任务</div>';
+            }
+
+            function renderHabitReminders(items){
+                let c = document.getElementById('push-habit-list');
+                if(!c) return;
+                c.innerHTML = items.length ? items.map(r=>{
+                    let days = (Array.isArray(r.days) ? r.days : []).map(d=>WEEK_CN[d]).join('');
+                    return '<div class="push-reminder-item"><div class="push-reminder-info"><div>'+escapeHtml(r.title)+'</div><div class="push-reminder-time">'+escapeHtml(r.time||'')+' · 周'+(days||'无')+'</div></div><span class="push-reminder-del" onclick="deletePushReminder(\''+r.id+'\')">✕</span></div>';
+                }).join('') : '<div style="padding:12px 0;color:var(--text3);font-size:12px;">暂无习惯提醒</div>';
             }
 
             window.deletePushReminder = function(id){
@@ -920,15 +1066,26 @@ ${recentNotes}
                 renderPushReminders();
             };
 
+            function firePush(tag, title, body){
+                barkPush(title, body)
+                    .then(()=>sendNotification(tag, title))
+                    .catch(e=>sendNotification(tag+'（Bark 未推送）', title+'：'+e.message));
+            }
+
             function checkPushReminders(){
                 let list = loadPushReminders();
-                let now = Date.now(), changed = false;
+                let changed = false;
                 list.forEach(r=>{
-                    if(!r.done && new Date(r.dueAt).getTime() <= now){
+                    if(!r || r.done) return;
+                    if(r.type==='review' && reviewDueToday(r)){
+                        r.lastPushed = todayStr(); changed = true;
+                        firePush('📖 复习提醒', r.title, r.body || '到复习时间了：'+r.title);
+                    } else if(r.type==='oneshot' && oneshotDue(r)){
                         r.done = true; changed = true;
-                        barkPush('定时提醒', r.title)
-                            .then(()=>sendNotification('⏰ 定时提醒', r.title))
-                            .catch(e=>sendNotification('⏰ 定时提醒（Bark 未推送）', r.title+'：'+e.message));
+                        firePush('⏰ 定时任务', r.title, r.body || '任务时间到：'+r.title);
+                    } else if(r.type==='habit' && habitDue(r)){
+                        r.lastPushed = todayStr(); changed = true;
+                        firePush('🔁 习惯提醒', r.title, r.body || '该执行习惯了：'+r.title);
                     }
                 });
                 if(changed) savePushReminders(list);
@@ -937,12 +1094,12 @@ ${recentNotes}
             setInterval(checkPushReminders, 30000);
 
             window.exportRemindersJson = function(){
-                let items = loadPushReminders().filter(r=>!r.done).map(r=>{
-                    let d = new Date(r.dueAt);
-                    let hh = String(d.getHours()).padStart(2,'0');
-                    let mm = String(d.getMinutes()).padStart(2,'0');
-                    return {time:hh+':'+mm, title:r.title, body:'来自司辰手记的定时提醒'};
-                });
+                let items = loadPushReminders().filter(r=>r && !r.done).map(r=>{
+                    if(r.type==='review') return {type:'review', title:r.title, intervals:r.intervals, lastReview:r.lastReview, nextIdx:r.nextIdx};
+                    if(r.type==='oneshot') return {type:'oneshot', title:r.title, at:r.at, done:false};
+                    if(r.type==='habit') return {type:'habit', title:r.title, time:r.time, days:r.days};
+                    return null;
+                }).filter(Boolean);
                 if(!items.length){ showToast('暂无未完成提醒可导出'); return; }
                 let blob = new Blob([JSON.stringify(items,null,2)], {type:'application/json'});
                 let a = document.createElement('a');
