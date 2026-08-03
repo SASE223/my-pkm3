@@ -354,6 +354,10 @@
                     <input type="text" id="push-review-intervals" placeholder="间隔天数 1,3,7,15,30" autocomplete="off">
                     <button class="btn btn-accent" onclick="addReviewReminder()">＋</button>
                 </div>
+                <div class="push-row">
+                    <span style="font-size:11px;color:var(--text3);white-space:nowrap;align-self:center;">复习对象来源</span>
+                    <select id="push-review-source" onchange="onReviewSourceChange(this)"><option value="">手动输入标题</option></select>
+                </div>
                 <div class="push-hint">默认间隔 1,3,7,15,30 天，可自定义如 1,2,4,7,15,30。添加后以今天为起点，到期提醒一次，点击「已复习」进入下一间隔。</div>
                 <div id="push-review-list"></div>
             </div>
@@ -365,6 +369,7 @@
                     <input type="time" id="push-oneshot-time">
                     <button class="btn btn-accent" onclick="addOneshotReminder()">＋</button>
                 </div>
+                <div class="push-hint">自动同步: 待办中已设置提醒时间的待办</div>
                 <div id="push-oneshot-list"></div>
             </div>
             <div class="push-section">
@@ -383,6 +388,7 @@
                     <button type="button" class="push-day-btn" data-day="6" onclick="toggleHabitDay(this)">六</button>
                     <button type="button" class="push-day-btn" data-day="0" onclick="toggleHabitDay(this)">日</button>
                 </div>
+                <div class="push-hint">自动同步: 例行提醒(时序页)里的所有例行提示</div>
                 <div id="push-habit-list"></div>
             </div>
             <div class="push-section">
@@ -888,10 +894,13 @@ ${recentNotes}
 /* ══════ 推送面板 ══════ */
             const PUSH_KEY_KEY = 'pkm_bark_key';
             const PUSH_REMINDERS_KEY = 'pkm_push_reminders';
+            const PUSH_DERIVED_KEY = 'pkm_push_derived_pushed';
             let barkKey = localStorage.getItem(PUSH_KEY_KEY) || '';
 
             function loadPushReminders(){ try{ let raw=localStorage.getItem(PUSH_REMINDERS_KEY); return raw ? JSON.parse(raw) : []; }catch(e){ return []; } }
             function savePushReminders(list){ localStorage.setItem(PUSH_REMINDERS_KEY, JSON.stringify(list)); }
+            function loadDerivedPushed(){ try{ let raw=localStorage.getItem(PUSH_DERIVED_KEY); return raw ? JSON.parse(raw) : {}; }catch(e){ return {}; } }
+            function saveDerivedPushed(o){ localStorage.setItem(PUSH_DERIVED_KEY, JSON.stringify(o)); }
 
             function barkPush(title, body){
                 if(!barkKey) return Promise.reject(new Error('未配置 Bark Key'));
@@ -949,8 +958,26 @@ ${recentNotes}
                 return days.indexOf(d.getDay()) !== -1 && hhmmStr(d) === (r.time||'') && r.lastPushed !== todayStr();
             }
 
+            function renderReviewSources(){
+                let sel = document.getElementById('push-review-source');
+                if(!sel) return;
+                let options = new Set();
+                appData.notes.forEach(n=>{ let t=(n.title||'').trim(); if(t) options.add(t); });
+                appData.habits.forEach(h=>{ let t=(h.name||'').trim(); if(t) options.add(t); });
+                sel.innerHTML = '<option value="">手动输入标题</option>' + [...options].map(t=>'<option value="'+escapeHtml(t)+'">'+escapeHtml(t)+'</option>').join('');
+            }
+
+            window.onReviewSourceChange = function(sel){
+                let v = (sel.value||'').trim();
+                if(!v) return;
+                document.getElementById('push-review-title').value = v;
+                sel.value = '';
+            };
+
             window.addReviewReminder = function(){
-                let title = document.getElementById('push-review-title').value.trim();
+                let sel = document.getElementById('push-review-source');
+                let selected = sel ? (sel.value||'').trim() : '';
+                let title = (selected || document.getElementById('push-review-title').value).trim();
                 let text = document.getElementById('push-review-intervals').value.trim();
                 let intervals = text ? text.split(/[,，、\s]+/).map(s=>parseInt(s,10)).filter(n=>Number.isFinite(n) && n > 0) : [1,3,7,15,30];
                 if(!title){ showToast('请填写复习内容'); return; }
@@ -1026,6 +1053,7 @@ ${recentNotes}
 
             function renderPushReminders(){
                 let list = loadPushReminders();
+                renderReviewSources();
                 renderReviewReminders(list.filter(r=>r.type==='review' && !r.done));
                 renderOneshotReminders(list.filter(r=>r.type==='oneshot' && !r.done));
                 renderHabitReminders(list.filter(r=>r.type==='habit'));
@@ -1089,6 +1117,29 @@ ${recentNotes}
                     }
                 });
                 if(changed) savePushReminders(list);
+
+                // 派生数据兜底推送：routineReminders / todos 的提醒在页面关闭后由 GitHub Actions 兜底，
+                // 本地也按同样规则即时检查一次；已推记录存 pkm_push_derived_pushed 防重。
+                let derivedPushed = loadDerivedPushed();
+                let derivedChanged = false;
+                let now = new Date(), today = todayStr();
+                (appData.routineReminders || []).forEach(r=>{
+                    let days = Array.isArray(r.days) ? r.days : [];
+                    if(days.indexOf(now.getDay()) !== -1 && hhmmStr(now) === (r.time||'') && !derivedPushed['routine_'+r.id+'_'+today]){
+                        derivedPushed['routine_'+r.id+'_'+today] = true; derivedChanged = true;
+                        firePush('🔁 习惯提醒', r.name, '该执行习惯了：'+r.name);
+                    }
+                });
+                (appData.todos || []).forEach(t=>{
+                    if(!t.remindAt || t.completed) return;
+                    let at = new Date(t.remindAt);
+                    if(isNaN(at.getTime()) || at.getTime() > Date.now()) return;
+                    if(!derivedPushed['todo_'+t.id+'_'+today]){
+                        derivedPushed['todo_'+t.id+'_'+today] = true; derivedChanged = true;
+                        firePush('⏰ 待办提醒', t.title, '任务时间到：'+t.title);
+                    }
+                });
+                if(derivedChanged) saveDerivedPushed(derivedPushed);
                 renderPushReminders();
             }
             setInterval(checkPushReminders, 30000);
@@ -1100,6 +1151,25 @@ ${recentNotes}
                     if(r.type==='habit') return {type:'habit', title:r.title, time:r.time, days:r.days};
                     return null;
                 }).filter(Boolean);
+                // 手动提醒与派生提醒按 (type+title+time/at) 去重，手动项优先
+                let seen = new Set(items.map(r=>r.type+'|'+(r.title||'')+'|'+(r.type==='oneshot' ? (r.at||'') : (r.time||''))));
+                // 派生 1：例行提醒 → 习惯提醒
+                (appData.routineReminders || []).forEach(r=>{
+                    let item = {type:'habit', title:r.name, time:r.time, days:Array.isArray(r.days) ? r.days : [], src:'routine'};
+                    let key = item.type+'|'+(item.title||'')+'|'+(item.time||'');
+                    if(seen.has(key)) return;
+                    seen.add(key); items.push(item);
+                });
+                // 派生 2：待办中带 remindAt 且未完成 → 定时任务（at 取本地时区 YYYY-MM-DDTHH:MM）
+                (appData.todos || []).forEach(t=>{
+                    if(!t.remindAt || t.completed) return;
+                    let at = new Date(t.remindAt);
+                    if(isNaN(at.getTime())) return;
+                    let item = {type:'oneshot', title:t.title, at: at.getFullYear()+'-'+pad2(at.getMonth()+1)+'-'+pad2(at.getDate())+'T'+pad2(at.getHours())+':'+pad2(at.getMinutes()), src:'todo'};
+                    let key = item.type+'|'+(item.title||'')+'|'+(item.at||'');
+                    if(seen.has(key)) return;
+                    seen.add(key); items.push(item);
+                });
                 if(!items.length){ showToast('暂无未完成提醒可导出'); return; }
                 let blob = new Blob([JSON.stringify(items,null,2)], {type:'application/json'});
                 let a = document.createElement('a');
