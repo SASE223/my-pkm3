@@ -33,10 +33,7 @@ jobs:
 
           # 北京时间 = UTC + 8h
           now = datetime.utcnow() + timedelta(hours=8)
-          today = now.strftime('%Y-%m-%d')
           hhmm = now.strftime('%H:%M')
-          # Python weekday(): 0=周一..6=周日 -> 前端 JS getDay(): 0=周日..6=周六
-          js_weekday = [6, 0, 1, 2, 3, 4, 5][now.weekday()]
           hour = now.hour
           if hour < 8 or hour > 23:
               print(f'北京时间 {hhmm} 不在 08:00-23:00 推送时段，跳过')
@@ -52,74 +49,113 @@ jobs:
               print(f'::error::解析 reminders.json 失败: {e}')
               sys.exit(1)
 
+          today = now.strftime('%Y-%m-%d')
           changed = False
 
-          def send_bark(title, body):
-              payload = json.dumps({'title': title, 'body': body}, ensure_ascii=False).encode('utf-8')
-              req = Request(
-                  f'https://api.day.app/{key}',
-                  data=payload,
-                  headers={'Content-Type': 'application/json; charset=utf-8'},
-                  method='POST',
-              )
-              with urlopen(req, timeout=15) as resp:
-                  if resp.status >= 400:
-                      raise RuntimeError(f'HTTP {resp.status}')
-                  print(f'推送成功: {title} (HTTP {resp.status})')
+          # 自动复习：配置项 {type:'review', count:N} + 每篇笔记 {type:'review', title, dueDates:[...]}
+          review_configs = [r for r in reminders if r.get('type') == 'review' and not r.get('title') and 'dueDates' not in r and r.get('count') is not None]
+          try:
+              count = int(review_configs[0].get('count')) if review_configs else 3
+          except (TypeError, ValueError):
+              count = 3
+          count = max(1, min(count, 20))
+          due_pool = [r for r in reminders if r.get('type') == 'review' and today in (r.get('dueDates') or []) and r.get('lastPushed') != today]
+          if due_pool:
+              import random
+              random.shuffle(due_pool)
+              for r in due_pool[:count]:
+                  payload = json.dumps({
+                      'title': '📖 复习',
+                      'body': r.get('title') or '复习笔记',
+                  }, ensure_ascii=False).encode('utf-8')
+                  req = Request(
+                      f'https://api.day.app/{key}',
+                      data=payload,
+                      headers={'Content-Type': 'application/json; charset=utf-8'},
+                      method='POST',
+                  )
+                  with urlopen(req, timeout=15) as resp:
+                      print(f'复习推送成功: {r.get("title")} (HTTP {resp.status})')
+                  r['lastPushed'] = today
+                  changed = True
+          else:
+              print(f'北京时间 {hhmm} 无到期复习')
 
+          # 定时/习惯等其他提醒（oneshot 按 at 到期、habit 按星期+时间）
           for r in reminders:
               typ = r.get('type')
-              if typ == 'review':
-                  intervals = r.get('intervals') or [1, 3, 7, 15, 30]
-                  if not isinstance(intervals, list) or not intervals:
-                      print(f'::error::复习提醒间隔无效: {r.get("title")}')
-                      continue
-                  try:
-                      y, m, d = map(int, str(r.get('lastReview') or today).split('-'))
-                      last_review = datetime(y, m, d)
-                      next_idx = min(int(r.get('nextIdx', 0)), len(intervals) - 1)
-                      due = last_review + timedelta(days=int(intervals[next_idx]))
-                      if due.date() <= now.date() and r.get('lastPushed') != today:
-                          send_bark(r.get('title') or '复习提醒', r.get('body') or f'到复习时间了：{r.get("title")}')
-                          r['lastPushed'] = today
-                          changed = True
-                  except Exception as e:
-                      print(f'::error::复习提醒计算失败 {r.get("title")}: {e}')
-              elif typ == 'oneshot':
+              if typ == 'oneshot':
                   try:
                       at = datetime.strptime(r.get('at') or '', '%Y-%m-%dT%H:%M')
                       if at <= now and not r.get('done'):
-                          send_bark(r.get('title') or '定时任务', r.get('body') or f'任务时间到：{r.get("title")}')
+                          payload = json.dumps({
+                              'title': r.get('title') or '定时任务',
+                              'body': r.get('body') or f'任务时间到：{r.get("title")}',
+                          }, ensure_ascii=False).encode('utf-8')
+                          req = Request(
+                              f'https://api.day.app/{key}',
+                              data=payload,
+                              headers={'Content-Type': 'application/json; charset=utf-8'},
+                              method='POST',
+                          )
+                          with urlopen(req, timeout=15) as resp:
+                              print(f'定时任务推送成功: {r.get("title")} (HTTP {resp.status})')
                           r['done'] = True
                           changed = True
                   except Exception as e:
                       print(f'::error::定时任务解析失败 {r.get("title")}: {e}')
               elif typ == 'habit':
+                  # Python weekday(): 0=周一..6=周日 -> 前端 JS getDay(): 0=周日..6=周六
+                  js_weekday = [6, 0, 1, 2, 3, 4, 5][now.weekday()]
                   days = r.get('days') or []
                   if js_weekday in days and r.get('time') == hhmm and r.get('lastPushed') != today:
-                      send_bark(r.get('title') or '习惯提醒', r.get('body') or f'该执行习惯了：{r.get("title")}')
+                      payload = json.dumps({
+                          'title': r.get('title') or '习惯提醒',
+                          'body': r.get('body') or f'该执行习惯了：{r.get("title")}',
+                      }, ensure_ascii=False).encode('utf-8')
+                      req = Request(
+                          f'https://api.day.app/{key}',
+                          data=payload,
+                          headers={'Content-Type': 'application/json; charset=utf-8'},
+                          method='POST',
+                      )
+                      with urlopen(req, timeout=15) as resp:
+                          print(f'习惯提醒推送成功: {r.get("title")} (HTTP {resp.status})')
                       r['lastPushed'] = today
                       changed = True
               else:
-                  print(f'跳过未知类型提醒: {typ or "无 type"}')
+                  if typ not in ('review',) and r.get('title'):
+                      # 兼容旧格式：仅 time 字段的提醒
+                      if str(r.get('time', '')) == hhmm and r.get('lastPushed') != today:
+                          payload = json.dumps({
+                              'title': r.get('title') or '定时提醒',
+                              'body': r.get('body') or '司辰定时提醒',
+                          }, ensure_ascii=False).encode('utf-8')
+                          req = Request(
+                              f'https://api.day.app/{key}',
+                              data=payload,
+                              headers={'Content-Type': 'application/json; charset=utf-8'},
+                              method='POST',
+                          )
+                          with urlopen(req, timeout=15) as resp:
+                              print(f'推送成功: {r.get("title")} (HTTP {resp.status})')
+                          r['lastPushed'] = today
+                          changed = True
 
-          if not changed:
-              print(f'北京时间 {hhmm} 无匹配提醒')
-          else:
+          if changed:
               with open('reminders.json', 'w', encoding='utf-8') as f:
                   json.dump(reminders, f, ensure_ascii=False, indent=2)
+              print('已更新 reminders.json 推送状态')
           PY
 
-      - name: 写回提醒状态到 gh-pages
-        if: always()
+      - name: 写回提醒状态
         run: |
-          if git status --porcelain -- reminders.json | grep -q 'reminders.json'; then
-            git config user.name "github-actions[bot]"
-            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add reminders.json
-            git commit -m "chore: 更新提醒推送状态 [skip ci]"
-            git push origin HEAD:gh-pages
-            echo "已写回提醒状态"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if git diff --quiet -- reminders.json; then
+            echo "reminders.json 无变更，跳过提交"
           else
-            echo "reminders.json 无变更"
+            git add reminders.json
+            git commit -m "chore: 更新提醒推送状态 $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+            git push
           fi
